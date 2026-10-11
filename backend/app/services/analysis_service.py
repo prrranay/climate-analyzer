@@ -192,7 +192,9 @@ class AnalysisService:
                 name: TrendStatisticsDTO(
                     metric_name=name,
                     slope_per_decade=trend.slope,
-                    slope_per_year=round(trend.slope / 10.0, 4) if trend.slope else None,
+                    slope_per_year=(
+                        round(trend.slope / 10.0, 4) if trend.slope is not None else None
+                    ),
                     intercept=trend.intercept,
                     p_value=trend.p_value,
                     direction=trend.direction,
@@ -424,7 +426,9 @@ class AnalysisService:
                 name: TrendStatisticsDTO(
                     metric_name=name,
                     slope_per_decade=trend.slope,
-                    slope_per_year=round(trend.slope / 10.0, 4) if trend.slope else None,
+                    slope_per_year=(
+                        round(trend.slope / 10.0, 4) if trend.slope is not None else None
+                    ),
                     intercept=trend.intercept,
                     p_value=trend.p_value,
                     direction=trend.direction,

@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.core.config import get_settings
+
 
 class RegionSearchQuery(BaseModel):
     """Query parameters for searching regions and geocoding."""
@@ -103,7 +105,13 @@ class HeatwaveAnalysisQuery(BaseModel):
         """Strict validation of year boundaries without silent clamping."""
         current_year = datetime.now(UTC).year
 
-        # 1. Year order
+        # 1. Year order and min analysis year
+        settings = get_settings()
+        if self.start_year < settings.min_analysis_year:
+            raise ValueError(
+                f"start_year ({self.start_year}) cannot precede minimum allowable year "
+                f"({settings.min_analysis_year})"
+            )
         if self.start_year > self.end_year:
             raise ValueError(
                 f"start_year ({self.start_year}) cannot be greater than end_year ({self.end_year})"
@@ -115,12 +123,12 @@ class HeatwaveAnalysisQuery(BaseModel):
                 f"end_year ({self.end_year}) exceeds the current calendar year ({current_year})"
             )
 
-        # 3. Maximum query span duration (e.g., maximum 85 years)
+        # 3. Maximum query span duration
         query_span = self.end_year - self.start_year + 1
-        if query_span > 85:
+        if query_span > settings.max_analysis_range_years:
             raise ValueError(
                 f"Requested span of {query_span} years exceeds the maximum allowable "
-                f"range of 85 years"
+                f"range of {settings.max_analysis_range_years} years"
             )
 
         # 4. Baseline validation if custom values provided
@@ -245,17 +253,24 @@ class BoundingBoxAnalysisQuery(BaseModel):
                 f"max_lon ({self.max_longitude})"
             )
 
-        # 2. Maximum area limit (max 25.0 square degrees)
+        # 2. Maximum area limit
+        settings = get_settings()
         lat_span = self.max_latitude - self.min_latitude
         lon_span = self.max_longitude - self.min_longitude
         area = lat_span * lon_span
-        if area > 25.0:
+        if area > settings.max_bbox_area_sq_degrees:
             raise ValueError(
-                f"Bounding box area ({area:.2f} deg²) exceeds maximum allowed limit of 25.00 deg²"
+                f"Bounding box area ({area:.2f} deg²) exceeds maximum allowed limit "
+                f"of {settings.max_bbox_area_sq_degrees:.2f} deg²"
             )
 
         # 3. Year constraints
         current_year = datetime.now(UTC).year
+        if self.start_year < settings.min_analysis_year:
+            raise ValueError(
+                f"start_year ({self.start_year}) cannot precede minimum allowable year "
+                f"({settings.min_analysis_year})"
+            )
         if self.start_year > self.end_year:
             raise ValueError(
                 f"start_year ({self.start_year}) cannot be greater than end_year ({self.end_year})"
@@ -265,9 +280,10 @@ class BoundingBoxAnalysisQuery(BaseModel):
                 f"end_year ({self.end_year}) exceeds the current calendar year ({current_year})"
             )
         query_span = self.end_year - self.start_year + 1
-        if query_span > 85:
+        if query_span > settings.max_analysis_range_years:
             raise ValueError(
-                f"Requested span of {query_span} years exceeds maximum allowable range of 85 years"
+                f"Requested span of {query_span} years exceeds maximum allowable "
+                f"range of {settings.max_analysis_range_years} years"
             )
 
         # 4. Baseline constraints

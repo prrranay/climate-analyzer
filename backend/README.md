@@ -486,13 +486,20 @@ Execute regional heatwave hazard analysis and trend regression across a geograph
 ### MongoDB Collections & Index Strategy
 1. **`weather_observations`**:
    - Schema: `{ location_key: "17.3850:78.4867", date: "2003-05-18", temp_max: 41.5, unit: "°C", source_model: "ERA5", updated_at: ISO }`
-   - **Unique Compound Index**: `[("location_key", 1), ("date", 1)]` (guarantees idempotency and prevents duplicate daily measurements).
+   - **Unique Compound Index**: `[("location_key", 1), ("date", 1), ("source_model", 1)]` (guarantees model isolation, allowing ERA5 and ERA5-Land observations to coexist without collision).
+   - **Automated Safe Migration**: On startup, `ensure_indexes()` safely drops legacy indexes lacking `source_model` (e.g. `location_key_1_date_1`) and backfills existing documents with missing `source_model` to `"ERA5"` before asserting the compound index.
 2. **`baseline_thresholds`**:
-   - Schema: `{ location_key: "...", baseline_start: 1991, baseline_end: 2020, percentile: 95.0, threshold_celsius: 39.4, updated_at: ISO }`
-   - **Unique Compound Index**: `[("location_key", 1), ("baseline_start", 1), ("baseline_end", 1), ("percentile", 1)]`.
+   - Schema: `{ location_key: "...", baseline_start: 1991, baseline_end: 2020, percentile: 95.0, threshold_celsius: 39.4, source_model: "ERA5", updated_at: ISO }`
+   - **Unique Compound Index**: `[("location_key", 1), ("baseline_start", 1), ("baseline_end", 1), ("percentile", 1), ("source_model", 1)]`.
 3. **`coverage_metadata`**:
    - Schema: `{ location_key: "...", model: "ERA5", start_date: "1991-01-01", end_date: "2020-12-31", record_count: 10958, revision: 1, updated_at: ISO }`
    - **Unique Compound Index**: `[("location_key", 1), ("model", 1)]`.
+
+### Ingestion Architecture & Calendar Date Coverage
+- **Exact Calendar Gap Detection**: Compares all calendar days in the requested interval against stored observations. Missing dates are partitioned into contiguous intervals and fetched in minimal batch queries.
+- **Persistent Missing Data Representation**: Distinguishes between un-fetched dates and explicitly stored missing dates (`temp_max = None`). Dates already stored with missing temperature are never re-fetched.
+- **Data Publication Lag Clamping**: The ingestion boundary is strictly clamped to `today - data_lag_buffer_days` (default 5 days for ERA5). Future dates are never queried or stored.
+- **Provisional Status for Current Year**: Ingested observations in the current calendar year are explicitly labeled `quality_status = "provisional"` (year-to-date) to prevent premature trend calculation.
 
 ### Deterministic Caching & Invalidation
 - **Key Determinism**: Analysis responses are cached in Redis under `analysis:{lat}_{lon}:{sha256}`. The SHA-256 hash encodes coordinates, years, baseline bounds, percentile, min consecutive days, model, algorithm version, and `dataset_version`.
@@ -513,20 +520,33 @@ Because the case study requires detecting heatwaves using at least 3 consecutive
    - For every calendar day $(m, d)$, temperatures are sampled across a $\pm 7$ calendar day centered window (15 calendar days total) across all 30 baseline years ($\approx 450$ samples per calendar day).
    - The 95th percentile is calculated via linear rank interpolation.
    - December-to-January circular wrapping and February 29 leap days are preserved deterministically.
+   - **Response Semantics**: Because the threshold varies dynamically for every calendar day throughout the year, the response object returns `threshold_celsius: null` on the baseline DTO rather than presenting an arithmetic average as though it were a constant cutoff.
 3. **Strict Inequality Exceedance**:
    - A day qualifies as an anomalous hot day if and only if $T_{\text{max}} > T_{95}(m, d)$. Equal temperatures are non-qualifying.
 
 ### 2. Event Detection & Year Attribution
 - **Qualifying Heatwave**: Defined as **at least 3 consecutive calendar days** satisfying $T_{\text{max}} > T_{95}$.
 - **Calendar Continuity**: Continuity is strictly enforced. Any missing observation (`temp_max = None`) or date gap ($> 1$ day) terminates an active streak. Missing temperatures are **never fabricated or linearly interpolated**.
-- **Year Boundary Invariance**: Events crossing December 31 into January 1 are attributed to the calendar year in which they **originated** (start year), preventing duplicate event counts across years.
+- **Year Boundary Invariance & Cross-Year Accounting**:
+  - **Event Frequency**: Attributed exclusively to the calendar year in which the event **originated** (inception year).
+  - **Heatwave Days**: Distributed across the calendar years in which each qualifying day actually occurs (e.g., an event spanning Dec 30 to Jan 3 attributes 2 days to the first year and 3 days to the second).
+  - **Exceedance Intensity**: Daily thermal exceedances above the calendar threshold are summed into the exact calendar year in which each day occurred.
 
-### 3. Data Completeness & Quality Thresholds
-- Each analysis year requires a minimum of **90% valid daily observations** with no continuous missing streak $> 15$ days to achieve `reliable` status.
-- Years failing this criteria are marked `incomplete`. A zero-event count in an incomplete year is distinguished from a confirmed zero-event year.
+### 3. Data Completeness & Quality Policy
+- **Calendar-Derived Metrics**: `expected_days` is derived strictly from the Gregorian calendar (365 days, or 366 days in leap years), not from the number of returned observations.
+- **Accurate Missing Streak**: `longest_missing_streak_days` tracks the maximum consecutive run of missing calendar days across the entire calendar year.
+- **Outlier & Non-Finite Sanitization**: Any raw observation with non-finite values (`NaN`, `+Inf`, `-Inf`) or physical implausibility ($T_{\text{max}} < -100^\circ\text{C}$ or $T_{\text{max}} > +70^\circ\text{C}$) is flagged and sanitized to `None`.
+- **Quality Status Categories**:
+  - `reliable`: Completeness $\ge 90\%$ and longest consecutive missing streak $\le 15$ days.
+  - `provisional`: Assigned to the current ongoing calendar year (year-to-date data).
+  - `incomplete`: Usable days between $50\%$ and $90\%$, or missing streak $> 15$ days.
+  - `insufficient_data`: Usable days $< 50\%$.
 
 ### 4. Trend Regression & Honest Insights
 - Annual frequency, duration, and intensity trends are computed via Ordinary Least Squares (OLS) linear regression.
+- **Quality Exclusion**: Only `reliable` years are included in trend regression and period comparisons; `provisional` and `incomplete` years are strictly excluded.
+- **Sample Sufficiency**: Requires at least 10 reliable years for regression. When reliable years are insufficient, slope is reported as `null` rather than asserting zero events or claiming a false flat trend.
+- **Numeric Slope Preservation**: When slope is truly zero, it is serialized as `0.0` rather than `null`.
 - Slopes are reported with explicit units (`events/decade`, `days/decade`, `°C-days/decade`).
 - Statistical significance is evaluated at $\alpha = 0.05$. Slopes with $p \ge 0.05$ are labeled as not statistically significant.
 - Mathematical division protection suppresses percentage changes when early baseline frequency is zero, reporting absolute differences instead to prevent misleading mathematical artifacts.

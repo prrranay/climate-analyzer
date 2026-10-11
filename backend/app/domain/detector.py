@@ -69,6 +69,12 @@ def detect_heatwave_events(
             mean_exc = cum_exc / streak_len
             mean_thresh = sum(thresh for _, thresh in current_streak) / streak_len
 
+            daily_exc_tuple = tuple(
+                (obs.date, round(obs.temp_max - thresh, 2))
+                for obs, thresh in current_streak
+                if obs.temp_max is not None
+            )
+
             events.append(
                 HeatwaveEvent(
                     start_date=start_d,
@@ -79,6 +85,7 @@ def detect_heatwave_events(
                     peak_exceedance=round(peak_exc, 2),
                     cumulative_exceedance=round(cum_exc, 2),
                     mean_exceedance=round(mean_exc, 2),
+                    daily_exceedances=daily_exc_tuple,
                 )
             )
         current_streak = []

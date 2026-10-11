@@ -25,25 +25,65 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
         self._thresholds = database["baseline_thresholds"]
 
     async def ensure_indexes(self) -> None:
-        """Create unique compound indexes if not already present."""
+        """Create unique compound indexes and migrate legacy indexes/data safely."""
         try:
+            # 1. Weather observations collection:
+            existing_indexes = await self._observations.index_information()
+            for index_name, index_info in existing_indexes.items():
+                keys = [k[0] for k in index_info.get("key", [])]
+                if keys == ["location_key", "date"]:
+                    logger.info(
+                        "Dropping legacy observations index '%s' lacking source_model",
+                        index_name,
+                    )
+                    await self._observations.drop_index(index_name)
+
+            # Migrate legacy observations without source_model field
+            await self._observations.update_many(
+                {"source_model": {"$exists": False}},
+                {"$set": {"source_model": "ERA5"}},
+            )
+
+            # Create unique compound index on (location_key, date, source_model)
             await self._observations.create_index(
-                [("location_key", 1), ("date", 1)],
+                [("location_key", 1), ("date", 1), ("source_model", 1)],
                 unique=True,
                 background=True,
             )
+
+            # 2. Baseline thresholds collection:
+            thresh_indexes = await self._thresholds.index_information()
+            for index_name, index_info in thresh_indexes.items():
+                keys = [k[0] for k in index_info.get("key", [])]
+                if "source_model" not in keys and "location_key" in keys:
+                    logger.info(
+                        "Dropping legacy thresholds index '%s' lacking source_model",
+                        index_name,
+                    )
+                    await self._thresholds.drop_index(index_name)
+
+            # Migrate legacy thresholds without source_model field
+            await self._thresholds.update_many(
+                {"source_model": {"$exists": False}},
+                {"$set": {"source_model": "ERA5"}},
+            )
+
             await self._thresholds.create_index(
                 [
                     ("location_key", 1),
                     ("baseline_start", 1),
                     ("baseline_end", 1),
                     ("percentile", 1),
+                    ("source_model", 1),
                 ],
                 unique=True,
                 background=True,
             )
         except Exception as exc:
-            logger.warning(f"Failed to create indexes in MongoWeatherRepository: {exc}")
+            logger.warning(
+                "Failed to create/migrate indexes in MongoWeatherRepository: %s",
+                exc,
+            )
 
     async def upsert_observations(
         self,
@@ -69,7 +109,11 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
             }
             operations.append(
                 UpdateOne(
-                    {"location_key": loc_key, "date": obs.date.isoformat()},
+                    {
+                        "location_key": loc_key,
+                        "date": obs.date.isoformat(),
+                        "source_model": obs.source_model,
+                    },
                     {"$set": doc},
                     upsert=True,
                 )
@@ -83,11 +127,13 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
         location: GeoLocation,
         start_date: date,
         end_date: date,
+        model: str = "ERA5",
     ) -> list[DailyWeatherObservation]:
-        """Retrieve daily observations within an inclusive date range."""
+        """Retrieve daily observations within an inclusive date range for a specific model."""
         loc_key = location.coordinate_key
         query = {
             "location_key": loc_key,
+            "source_model": model,
             "date": {
                 "$gte": start_date.isoformat(),
                 "$lte": end_date.isoformat(),
@@ -105,7 +151,7 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
                     date=obs_date,
                     temp_max=doc.get("temp_max"),
                     unit=doc.get("unit", "°C"),
-                    source_model=doc.get("source_model", "ERA5"),
+                    source_model=doc.get("source_model", model),
                 )
             )
 
@@ -116,13 +162,14 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
         location: GeoLocation,
         baseline: BaselineConfig,
     ) -> float | None:
-        """Retrieve precomputed baseline threshold."""
+        """Retrieve precomputed baseline threshold for location and model."""
         doc = await self._thresholds.find_one(
             {
                 "location_key": location.coordinate_key,
                 "baseline_start": baseline.baseline_start_year,
                 "baseline_end": baseline.baseline_end_year,
                 "percentile": baseline.percentile_threshold,
+                "source_model": baseline.source_model,
             }
         )
         if doc and "threshold_celsius" in doc:
@@ -135,17 +182,19 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
         baseline: BaselineConfig,
         threshold_celsius: float,
     ) -> None:
-        """Persist precomputed baseline threshold."""
+        """Persist precomputed baseline threshold for location and model."""
         await self._thresholds.update_one(
             {
                 "location_key": location.coordinate_key,
                 "baseline_start": baseline.baseline_start_year,
                 "baseline_end": baseline.baseline_end_year,
                 "percentile": baseline.percentile_threshold,
+                "source_model": baseline.source_model,
             },
             {
                 "$set": {
                     "threshold_celsius": threshold_celsius,
+                    "source_model": baseline.source_model,
                     "updated_at": datetime.now(UTC).isoformat(),
                 }
             },

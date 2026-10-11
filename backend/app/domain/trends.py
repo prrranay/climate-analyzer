@@ -120,17 +120,19 @@ def compute_all_hazard_trends(
     annual_metrics: list[AnnualHeatwaveMetrics],
     min_years: int = _DEFAULT_MIN_YEARS_FOR_TREND,
 ) -> dict[str, TrendStatistics]:
-    """Compute trend statistics for frequency, duration, and intensity."""
+    """Compute trend statistics for frequency, duration, and intensity using reliable years."""
     if not annual_metrics:
         return {}
 
-    years = [m.year for m in annual_metrics]
+    # Quality policy: Exclude incomplete, insufficient, or provisional years from regression
+    reliable_metrics = [m for m in annual_metrics if m.quality_status == "reliable"]
 
-    frequency_values = [float(m.event_count) for m in annual_metrics]
-    hw_days_values = [float(m.total_heatwave_days) for m in annual_metrics]
+    years = [m.year for m in reliable_metrics]
+    frequency_values = [float(m.event_count) for m in reliable_metrics]
+    hw_days_values = [float(m.total_heatwave_days) for m in reliable_metrics]
     intensity_values = [
         float(m.cumulative_intensity) if m.cumulative_intensity is not None else 0.0
-        for m in annual_metrics
+        for m in reliable_metrics
     ]
 
     return {
@@ -162,12 +164,12 @@ def generate_trend_insights(
     annual_metrics: list[AnnualHeatwaveMetrics],
     trends: dict[str, TrendStatistics],
 ) -> list[str]:
-    """Generate human-readable analytical observations.
+    """Generate human-readable analytical observations based on reliable observations.
 
     Strict scientific handling of:
     - Zero comparison baseline (percentages undefined, reports absolute differences).
     - Statistical significance qualification.
-    - Data quality reliability warnings.
+    - Exclusion of unreliable/provisional years from trend and comparison conclusions.
     """
     insights: list[str] = []
 
@@ -175,15 +177,15 @@ def generate_trend_insights(
         return ["No historical meteorological records were provided for hazard analysis."]
 
     total_years = len(annual_metrics)
-    unreliable_years = [m.year for m in annual_metrics if m.quality_status != "reliable"]
+    unreliable_metrics = [m for m in annual_metrics if m.quality_status != "reliable"]
+    reliable_metrics = [m for m in annual_metrics if m.quality_status == "reliable"]
 
-    if unreliable_years:
+    if unreliable_metrics:
+        unreliable_labels = [f"{m.year} ({m.quality_status})" for m in unreliable_metrics[:5]]
         insights.append(
-            f"Data quality notice: {len(unreliable_years)} of {total_years} years "
-            f"({', '.join(str(y) for y in unreliable_years[:5])}"
-            f"{'...' if len(unreliable_years) > 5 else ''}) "
-            f"had incomplete coverage (<90%). Observations for those years should be treated "
-            f"with caution."
+            f"Data quality notice: {len(unreliable_metrics)} of {total_years} years "
+            f"({', '.join(unreliable_labels)}{'...' if len(unreliable_metrics) > 5 else ''}) "
+            f"were flagged as incomplete or provisional and excluded from trend regressions."
         )
 
     # Frequency trend insight
@@ -201,11 +203,12 @@ def generate_trend_insights(
                 f"(p={freq_trend.p_value:.4f} >= 0.05)."
             )
 
-    # Comparison between early baseline and recent period
-    if total_years >= 10:
-        split = total_years // 2
-        early_slice = annual_metrics[:split]
-        recent_slice = annual_metrics[split:]
+    # Comparison between early baseline and recent period using reliable years
+    n_reliable = len(reliable_metrics)
+    if n_reliable >= 10:
+        split = n_reliable // 2
+        early_slice = reliable_metrics[:split]
+        recent_slice = reliable_metrics[split:]
 
         early_mean_events = float(np.mean([m.event_count for m in early_slice]))
         recent_mean_events = float(np.mean([m.event_count for m in recent_slice]))
@@ -238,18 +241,24 @@ def generate_trend_insights(
         )
 
     # Peak severity insight
-    total_events = sum(m.event_count for m in annual_metrics)
-    if total_events == 0:
+    if not reliable_metrics:
         insights.append(
-            "Zero heatwave events meeting the 3-day 95th-percentile threshold occurred "
-            "during the analyzed span."
+            "Observations across the analyzed span were insufficient to "
+            "reliably assess heatwave occurrence."
         )
     else:
-        max_duration_year = max(annual_metrics, key=lambda m: m.max_duration_days or 0)
-        if max_duration_year.max_duration_days:
+        total_events = sum(m.event_count for m in reliable_metrics)
+        if total_events == 0:
             insights.append(
-                f"The longest heatwave event lasted {max_duration_year.max_duration_days} "
-                f"consecutive days (recorded in {max_duration_year.year})."
+                "Zero heatwave events meeting the 3-day 95th-percentile threshold occurred "
+                "during the analyzed reliable span."
             )
+        else:
+            max_duration_year = max(reliable_metrics, key=lambda m: m.max_duration_days or 0)
+            if max_duration_year.max_duration_days:
+                insights.append(
+                    f"The longest heatwave event lasted {max_duration_year.max_duration_days} "
+                    f"consecutive days (recorded in {max_duration_year.year})."
+                )
 
     return insights

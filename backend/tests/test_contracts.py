@@ -53,6 +53,7 @@ class DummyWeatherRepository:
         location: GeoLocation,
         start_date: date,
         end_date: date,
+        model: str = "ERA5",
     ) -> list[DailyWeatherObservation]:
         return []
 

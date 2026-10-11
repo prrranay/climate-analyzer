@@ -1,8 +1,9 @@
 """Application service for historical meteorological data ingestion and caching."""
 
 import logging
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
+from app.core.config import Settings, get_settings
 from app.domain.contracts import (
     CoverageMetadataRepositoryProtocol,
     HistoricalWeatherProviderProtocol,
@@ -21,10 +22,12 @@ class WeatherService:
         weather_repo: WeatherRepositoryProtocol,
         weather_provider: HistoricalWeatherProviderProtocol,
         coverage_repo: CoverageMetadataRepositoryProtocol | None = None,
+        settings: Settings | None = None,
     ) -> None:
         self._repo = weather_repo
         self._provider = weather_provider
         self._coverage_repo = coverage_repo
+        self._settings = settings or get_settings()
 
     async def ensure_historical_observations(
         self,
@@ -33,83 +36,83 @@ class WeatherService:
         end_date: date,
         model: str = "ERA5",
     ) -> list[DailyWeatherObservation]:
-        """Ensure observations are available for the entire requested span.
+        """Ensure observations are available for the requested span.
 
-        Checks MongoDB repository first. If all required calendar observations
-        exist, reuses them without contacting the remote API. If missing or
-        partially incomplete, fetches only the absent date span from Open-Meteo
-        and persists them idempotently.
+        Exact missing-calendar-date detection:
+        - Retrieves existing observations from MongoDB for the location and model.
+        - Distinguishes stored missing temperatures from dates that were never fetched.
+        - Clamps the fetch ceiling by data_lag_buffer_days from today to avoid ingesting
+          future or unfinalized dates.
+        - Groups missing dates into contiguous spans and fetches only those ranges.
+        - Persists new observations idempotently without fabricating future missing dates.
         """
-        expected_days = (end_date - start_date).days + 1
+        # 1. Determine maximum ingestible date based on current time and publication lag
+        today = datetime.now(UTC).date()
+        max_ingestible_date = today - timedelta(days=self._settings.data_lag_buffer_days)
+        clamped_end_date = min(end_date, max_ingestible_date)
 
-        # 1. Check local persistent storage
-        existing_obs = await self._repo.get_observations(location, start_date, end_date)
-
-        if len(existing_obs) == expected_days:
-            logger.debug(
-                "Cache hit: Reusing %d observations from MongoDB for %s (%s to %s)",
-                len(existing_obs),
-                location.coordinate_key,
-                start_date,
-                end_date,
-            )
-            return existing_obs
-
-        # 2. Determine exact missing date segment to avoid re-fetching already stored days
-        fetch_start = start_date
-        fetch_end = end_date
-
-        if existing_obs:
-            first_stored = existing_obs[0].date
-            last_stored = existing_obs[-1].date
-            if first_stored == start_date and last_stored < end_date:
-                # Contiguous prefix present: only fetch missing suffix
-                fetch_start = last_stored + timedelta(days=1)
-                logger.info(
-                    "Reusing %d observations; fetching missing %s to %s from Open-Meteo",
-                    len(existing_obs),
-                    fetch_start,
-                    fetch_end,
-                )
-            elif first_stored > start_date and last_stored == end_date:
-                # Contiguous suffix present: only fetch missing prefix
-                fetch_end = first_stored - timedelta(days=1)
-                logger.info(
-                    "Reusing %d observations; fetching missing %s to %s from Open-Meteo",
-                    len(existing_obs),
-                    fetch_start,
-                    fetch_end,
-                )
-
-        # 3. Ingest missing observations from remote reanalysis provider
-        remote_obs = await self._provider.fetch_historical_daily(
-            location=location,
-            start_date=fetch_start,
-            end_date=fetch_end,
-            model=model,
+        # 2. Check local persistent storage for this model
+        existing_obs = await self._repo.get_observations(
+            location, start_date, end_date, model=model
         )
+        stored_by_date = {obs.date: obs for obs in existing_obs}
 
-        # 4. Persist to MongoDB
-        await self._repo.upsert_observations(location, remote_obs)
+        # 3. Detect exact missing calendar dates up to clamped_end_date
+        missing_dates: list[date] = []
+        if clamped_end_date >= start_date:
+            curr = start_date
+            while curr <= clamped_end_date:
+                if curr not in stored_by_date:
+                    missing_dates.append(curr)
+                curr += timedelta(days=1)
 
-        # 5. Record coverage bounds if repository provided
-        if self._coverage_repo is not None:
-            await self._coverage_repo.record_coverage(
-                location=location,
-                start_date=start_date,
-                end_date=end_date,
-                record_count=len(existing_obs) + len(remote_obs),
-                model=model,
+        # 4. Ingest missing dates grouped into contiguous spans
+        if missing_dates:
+            ranges: list[tuple[date, date]] = []
+            range_start = missing_dates[0]
+            prev = missing_dates[0]
+            for d in missing_dates[1:]:
+                if d == prev + timedelta(days=1):
+                    prev = d
+                else:
+                    ranges.append((range_start, prev))
+                    range_start = d
+                    prev = d
+            ranges.append((range_start, prev))
+
+            logger.info(
+                "Ingesting %d missing dates across %d range(s) for %s (%s) from Open-Meteo",
+                len(missing_dates),
+                len(ranges),
+                location.coordinate_key,
+                model,
             )
 
-        # 6. Return full sorted daily observation series
-        if not existing_obs:
-            return remote_obs
+            for r_start, r_end in ranges:
+                remote_obs = await self._provider.fetch_historical_daily(
+                    location=location,
+                    start_date=r_start,
+                    end_date=r_end,
+                    model=model,
+                )
+                if remote_obs:
+                    await self._repo.upsert_observations(location, remote_obs)
+                    for obs in remote_obs:
+                        stored_by_date[obs.date] = obs
 
-        combined = {obs.date: obs for obs in existing_obs}
-        for obs in remote_obs:
-            combined[obs.date] = obs
-        return [combined[d] for d in sorted(combined.keys()) if start_date <= d <= end_date]
+            # 5. Record coverage bounds if repository provided
+            if self._coverage_repo is not None:
+                await self._coverage_repo.record_coverage(
+                    location=location,
+                    start_date=start_date,
+                    end_date=clamped_end_date,
+                    record_count=len(stored_by_date),
+                    model=model,
+                )
+
+        # 6. Return sorted observations for the requested span
+        sorted_dates = sorted(stored_by_date.keys())
+        return [stored_by_date[d] for d in sorted_dates if start_date <= d <= end_date]
 
     async def get_dataset_version(
         self,

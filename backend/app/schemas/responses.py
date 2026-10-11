@@ -59,8 +59,11 @@ class BaselineConfigDTO(BaseModel):
     )
     threshold_celsius: float | None = Field(
         default=None,
-        description="Computed regional 95th-percentile threshold in °C (None if not yet computed)",
-        examples=[30.45],
+        description=(
+            "Constant threshold in °C if a static threshold method is used; "
+            "None when using calendar-day moving-window percentiles which vary daily"
+        ),
+        examples=[None],
     )
     min_consecutive_days: int = Field(
         default=3,

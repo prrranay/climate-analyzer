@@ -158,7 +158,15 @@ class RateLimiterDependency:
         if not settings.rate_limit_enabled:
             return
 
-        limit = self.max_requests or settings.rate_limit_requests_per_minute
+        if self.max_requests is not None:
+            limit = self.max_requests
+        elif self.scope in ("heatwave_analysis", "heatwave_bbox_analysis"):
+            limit = settings.rate_limit_analysis_rpm
+        elif self.scope in ("regions_search", "regions"):
+            limit = settings.rate_limit_regions_rpm
+        else:
+            limit = settings.rate_limit_requests_per_minute
+
         window = self.window_seconds or settings.rate_limit_window_seconds
         trusted_proxies = set(settings.trusted_proxies)
 

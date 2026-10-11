@@ -83,27 +83,51 @@ def run_climate_hazard_analysis(
 
     # Derive overall quality stats if not provided
     if quality_stats is None:
-        total_days = len(scoped_obs)
+        import calendar
+        from datetime import date, timedelta
+
+        total_expected_days = sum(
+            366 if calendar.isleap(y) else 365
+            for y in range(analysis_start_year, analysis_end_year + 1)
+        )
+        obs_map = {o.date: o for o in scoped_obs}
         observed_days = sum(1 for o in scoped_obs if o.temp_max is not None)
-        missing_days = total_days - observed_days
-        comp_ratio = observed_days / total_days if total_days > 0 else 0.0
+        missing_days = total_expected_days - observed_days
+        comp_ratio = observed_days / total_expected_days if total_expected_days > 0 else 0.0
+
+        # Calculate actual longest missing streak across the requested calendar span
+        longest_missing = 0
+        current_missing = 0
+        cur_d = date(analysis_start_year, 1, 1)
+        end_d = date(analysis_end_year, 12, 31)
+        while cur_d <= end_d:
+            o = obs_map.get(cur_d)
+            if o is not None and o.temp_max is not None:
+                current_missing = 0
+            else:
+                current_missing += 1
+                if current_missing > longest_missing:
+                    longest_missing = current_missing
+            cur_d += timedelta(days=1)
+
         quality_stats = DataQualityStats(
-            total_expected_days=total_days,
+            total_expected_days=total_expected_days,
             observed_days=observed_days,
             missing_days=missing_days,
             completeness_ratio=round(comp_ratio, 4),
-            has_critical_gaps=(comp_ratio < 0.90),
+            has_critical_gaps=(comp_ratio < 0.90) or (longest_missing > 15),
+            longest_missing_streak_days=longest_missing,
         )
 
-    # Average baseline threshold for reference metadata
-    avg_thresh = round(sum(threshold_lookup.values()) / len(threshold_lookup), 2)
+    # Moving-window climatological thresholds vary by calendar day; do not present
+    # a misleading arithmetic average as though it were a constant detection threshold.
     resolved_baseline = BaselineConfig(
         baseline_start_year=baseline_config.baseline_start_year,
         baseline_end_year=baseline_config.baseline_end_year,
         percentile_threshold=baseline_config.percentile_threshold,
         min_consecutive_days=min_consecutive_days,
         source_model=baseline_config.source_model,
-        calculated_threshold_celsius=avg_thresh,
+        calculated_threshold_celsius=None,
     )
 
     return CompleteAnalysisResult(

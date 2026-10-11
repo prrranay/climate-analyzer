@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import math
 import random
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -248,9 +249,13 @@ class OpenMeteoHistoricalWeatherClient(HistoricalWeatherProviderProtocol):
                     f"Duplicate date '{obs_date}' in upstream response."
                 )
 
-            # Round valid float or preserve None
+            # Round valid float or preserve None, rejecting non-finite and physical outlier values
             if temp_val is not None:
-                upstream_records[obs_date] = round(float(temp_val), 2)
+                val = float(temp_val)
+                if math.isnan(val) or math.isinf(val) or not (-100.0 <= val <= 70.0):
+                    upstream_records[obs_date] = None
+                else:
+                    upstream_records[obs_date] = round(val, 2)
             else:
                 upstream_records[obs_date] = None
 

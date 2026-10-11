@@ -5,6 +5,7 @@ and value objects. They are deliberately decoupled from API serialization
 and external database storage concerns.
 """
 
+import math
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Literal
@@ -110,6 +111,14 @@ class DailyWeatherObservation:
     unit: str = "°C"
     source_model: str = "ERA5"
 
+    def __post_init__(self) -> None:
+        if self.temp_max is not None:
+            if math.isnan(self.temp_max) or math.isinf(self.temp_max):
+                object.__setattr__(self, "temp_max", None)
+            elif not (-100.0 <= self.temp_max <= 70.0):
+                # Physical outlier beyond plausible Earth surface temperatures
+                object.__setattr__(self, "temp_max", None)
+
     @property
     def is_valid(self) -> bool:
         """Returns True if primary temperature metric is present."""
@@ -165,6 +174,7 @@ class HeatwaveEvent:
     peak_exceedance: float
     cumulative_exceedance: float
     mean_exceedance: float
+    daily_exceedances: tuple[tuple[date, float], ...] = field(default_factory=tuple)
 
     def __post_init__(self) -> None:
         if self.start_date > self.end_date:

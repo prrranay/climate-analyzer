@@ -59,10 +59,10 @@ class MockWeatherRepository(WeatherRepositoryProtocol):
     """In-memory mock repository for weather observations."""
 
     def __init__(self, preloaded_obs: list[DailyWeatherObservation] | None = None) -> None:
-        self.storage: dict[date, DailyWeatherObservation] = {
-            obs.date: obs for obs in (preloaded_obs or [])
+        self.storage: dict[tuple[date, str], DailyWeatherObservation] = {
+            (obs.date, getattr(obs, "source_model", "ERA5")): obs for obs in (preloaded_obs or [])
         }
-        self.cached_thresholds: dict[tuple[int, int, float], float] = {}
+        self.cached_thresholds: dict[tuple[int, int, float, str], float] = {}
 
     async def upsert_observations(
         self,
@@ -71,7 +71,7 @@ class MockWeatherRepository(WeatherRepositoryProtocol):
     ) -> int:
         _ = location
         for obs in observations:
-            self.storage[obs.date] = obs
+            self.storage[(obs.date, getattr(obs, "source_model", "ERA5"))] = obs
         return len(observations)
 
     async def get_observations(
@@ -79,9 +79,14 @@ class MockWeatherRepository(WeatherRepositoryProtocol):
         location: GeoLocation,
         start_date: date,
         end_date: date,
+        model: str = "ERA5",
     ) -> list[DailyWeatherObservation]:
         _ = location
-        return [obs for d, obs in sorted(self.storage.items()) if start_date <= d <= end_date]
+        return [
+            obs
+            for (d, m), obs in sorted(self.storage.items(), key=lambda item: item[0][0])
+            if start_date <= d <= end_date and m == model
+        ]
 
     async def get_cached_threshold(
         self,
@@ -93,6 +98,7 @@ class MockWeatherRepository(WeatherRepositoryProtocol):
             baseline.baseline_start_year,
             baseline.baseline_end_year,
             baseline.percentile_threshold,
+            baseline.source_model,
         )
         return self.cached_thresholds.get(key)
 
@@ -107,6 +113,7 @@ class MockWeatherRepository(WeatherRepositoryProtocol):
             baseline.baseline_start_year,
             baseline.baseline_end_year,
             baseline.percentile_threshold,
+            baseline.source_model,
         )
         self.cached_thresholds[key] = threshold_celsius
 
@@ -333,7 +340,9 @@ async def test_api_analysis_heatwave_success(app_with_mocks):
         assert "baseline" in data
         assert data["baseline"]["baseline_start_year"] == 2000
         assert data["baseline"]["baseline_end_year"] == 2004
-        assert data["baseline"]["threshold_celsius"] is not None
+        # Scope 5: Calendar-day moving-window percentiles vary by day of year;
+        # threshold_celsius is None
+        assert data["baseline"]["threshold_celsius"] is None
 
         assert "data_quality" in data
         assert data["data_quality"]["completeness_percentage"] > 95.0

@@ -55,8 +55,9 @@ class WeatherRepositoryProtocol(Protocol):
         location: GeoLocation,
         start_date: date,
         end_date: date,
+        model: str = "ERA5",
     ) -> list[DailyWeatherObservation]:
-        """Retrieve daily weather observations within a date range."""
+        """Retrieve daily observations within a date range for a specific model."""
         ...
 
     async def get_cached_threshold(

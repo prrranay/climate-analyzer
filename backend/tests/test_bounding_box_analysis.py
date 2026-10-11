@@ -35,7 +35,7 @@ class MockBboxWeatherRepository(WeatherRepositoryProtocol):
 
     def __init__(self) -> None:
         self.storage: dict[tuple[str, date], DailyWeatherObservation] = {}
-        self.cached_thresholds: dict[tuple[str, int, int, float], float] = {}
+        self.cached_thresholds: dict[tuple[str, int, int, float, str], float] = {}
 
     async def upsert_observations(
         self,
@@ -43,7 +43,8 @@ class MockBboxWeatherRepository(WeatherRepositoryProtocol):
         observations: list[DailyWeatherObservation],
     ) -> int:
         for obs in observations:
-            self.storage[(location.coordinate_key, obs.date)] = obs
+            model = getattr(obs, "source_model", "ERA5")
+            self.storage[(location.coordinate_key, obs.date, model)] = obs
         return len(observations)
 
     async def get_observations(
@@ -51,10 +52,11 @@ class MockBboxWeatherRepository(WeatherRepositoryProtocol):
         location: GeoLocation,
         start_date: date,
         end_date: date,
+        model: str = "ERA5",
     ) -> list[DailyWeatherObservation]:
         res: list[DailyWeatherObservation] = []
-        for (coord, d), obs in sorted(self.storage.items(), key=lambda item: item[0][1]):
-            if coord == location.coordinate_key and start_date <= d <= end_date:
+        for (coord, d, m), obs in sorted(self.storage.items(), key=lambda item: item[0][1]):
+            if coord == location.coordinate_key and start_date <= d <= end_date and m == model:
                 res.append(obs)
         return res
 
@@ -68,6 +70,7 @@ class MockBboxWeatherRepository(WeatherRepositoryProtocol):
             baseline.baseline_start_year,
             baseline.baseline_end_year,
             baseline.percentile_threshold,
+            baseline.source_model,
         )
         return self.cached_thresholds.get(key)
 
@@ -82,6 +85,7 @@ class MockBboxWeatherRepository(WeatherRepositoryProtocol):
             baseline.baseline_start_year,
             baseline.baseline_end_year,
             baseline.percentile_threshold,
+            baseline.source_model,
         )
         self.cached_thresholds[key] = threshold_celsius
 
