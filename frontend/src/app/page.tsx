@@ -279,7 +279,7 @@ export default function Home() {
       : selectedLocation?.name || `${selectedLocation?.latitude.toFixed(2)}°, ${selectedLocation?.longitude.toFixed(2)}°`;
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-[#F8FAFC] flex flex-col font-sans selection:bg-[#F97316]/30 selection:text-[#FB923C] relative overflow-x-hidden">
+    <div className="min-h-screen lg:h-screen lg:overflow-hidden bg-[#090D16] text-[#F8FAFC] flex flex-col font-sans selection:bg-[#F97316]/30 selection:text-[#FB923C] relative">
       {/* Spatial Grid Watermark Background Overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#F97316_1px,transparent_1px)] [background-size:24px_24px] z-0" />
 
@@ -287,9 +287,9 @@ export default function Home() {
       <Header />
 
       {/* Main Workspace Canvas */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-10 flex flex-col">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 relative z-10 flex flex-col min-h-0 overflow-hidden">
         {/* Workspace Top Subheader Banner Shelf */}
-        <div className="mb-4 pb-3 border-b border-[#1E293B] flex items-center justify-between text-xs font-mono text-[#94A3B8]">
+        <div className="mb-3 pb-2 border-b border-[#1E293B] flex items-center justify-between text-xs font-mono text-[#94A3B8] shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">
               ANALYTICAL CANVAS
@@ -307,60 +307,65 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Dual Column Analytical Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start flex-1">
+        {/* Dual Column Analytical Layout with Independent Internal Scroll Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
           {/* Left Column: Filter and Parameter Controls Rail */}
-          <aside className="lg:col-span-4 w-full bg-[#090D16] border border-[#334155] rounded-xl p-4 lg:sticky lg:top-16 shadow-lg space-y-4">
+          <aside className="lg:col-span-4 w-full h-full bg-[#090D16] border border-[#334155] rounded-xl shadow-lg flex flex-col overflow-hidden min-h-0">
             {/* Top Meta Header inside Sidebar */}
-            <div className="pb-2 border-b border-[#1E293B] flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">
-                <Compass className="w-3.5 h-3.5 text-[#F97316]" />
-                <span>LOCATION &amp; PARAMETERS</span>
+            <div className="px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between shrink-0 bg-[#090D16]">
+              <div className="flex items-center gap-2">
+                <Compass className="w-4 h-4 text-[#F97316]" />
+                <span className="text-[11px] font-semibold tracking-wider text-[#94A3B8] uppercase">
+                  LOCATION QUERY
+                </span>
               </div>
-              <span className="text-[10px] font-mono text-[#FB923C] bg-[#F97316]/10 px-1.5 py-0.5 rounded border border-[#F97316]/20">
-                0.25° Spatial Grid
+              <span className="text-[10px] font-mono text-[#FB923C] bg-[#F97316]/10 px-1.5 py-0.5 rounded border border-[#F97316]/20 font-medium">
+                0.25° Spatial Resolution
               </span>
             </div>
 
-            {geographicMode === "search" && (
-              <RegionSearch
-                selectedLocation={selectedLocation}
-                onSelectLocation={(loc) => setSelectedLocation(loc)}
-                disabled={isLoading}
-              />
-            )}
+            {/* Parameter Body & Execution Controls */}
+            <div className="flex-1 overflow-hidden p-3.5 flex flex-col min-h-0">
+              <AnalysisControls
+                formState={formState}
+                onChange={handleUpdateForm}
+                onReset={handleReset}
+                onSubmit={handleRunAnalysis}
+                onCancel={cancel}
+                isLoading={isLoading}
+                canSubmit={canSubmit}
+                geographicMode={geographicMode}
+                onGeographicModeChange={setGeographicMode}
+              >
+                {geographicMode === "search" && (
+                  <RegionSearch
+                    selectedLocation={selectedLocation}
+                    onSelectLocation={(loc) => setSelectedLocation(loc)}
+                    disabled={isLoading}
+                  />
+                )}
 
-            {geographicMode === "coordinates" && (
-              <CoordinateInput
-                location={selectedLocation}
-                onChangeLocation={(loc) => setSelectedLocation(loc)}
-                disabled={isLoading}
-              />
-            )}
+                {geographicMode === "coordinates" && (
+                  <CoordinateInput
+                    location={selectedLocation}
+                    onChangeLocation={(loc) => setSelectedLocation(loc)}
+                    disabled={isLoading}
+                  />
+                )}
 
-            {geographicMode === "bbox" && (
-              <BoundingBoxInput
-                values={bboxValues}
-                onChange={setBboxValues}
-                disabled={isLoading}
-              />
-            )}
-
-            <AnalysisControls
-              formState={formState}
-              onChange={handleUpdateForm}
-              onReset={handleReset}
-              onSubmit={handleRunAnalysis}
-              onCancel={cancel}
-              isLoading={isLoading}
-              canSubmit={canSubmit}
-              geographicMode={geographicMode}
-              onGeographicModeChange={setGeographicMode}
-            />
+                {geographicMode === "bbox" && (
+                  <BoundingBoxInput
+                    values={bboxValues}
+                    onChange={setBboxValues}
+                    disabled={isLoading}
+                  />
+                )}
+              </AnalysisControls>
+            </div>
           </aside>
 
-          {/* Right Column: Dashboard Visualizations & Insights Canvas */}
-          <section className="lg:col-span-8 space-y-4 min-w-0">
+          {/* Right Column: Dashboard Visualizations & Insights Canvas (Internal Scrolling) */}
+          <section className="lg:col-span-8 w-full h-full flex flex-col overflow-y-auto custom-scrollbar min-h-0 pr-1 space-y-4">
             {/* Error Alert with Retry Action */}
             {error && (
               <ErrorAlert
@@ -525,23 +530,6 @@ export default function Home() {
               <EmptyState onSelectPreset={handleLoadExample} />
             )}
           </section>
-        </div>
-
-        {/* Live Pipeline Processing Telemetry Ribbon (Bottom Shelf) */}
-        <div className="mt-8 pt-3 border-t border-[#1E293B] flex items-center justify-between text-[11px] font-mono text-[#64748B]">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-              <span>API Gateway: FastAPI Cluster</span>
-            </span>
-            <span className="text-[#334155]">•</span>
-            <span>Query Cache: Redis In-Memory</span>
-            <span className="text-[#334155]">•</span>
-            <span>Storage: MongoDB Climatology Grid</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-2">
-            <span>Response Time: &lt;50ms</span>
-          </div>
         </div>
       </main>
 

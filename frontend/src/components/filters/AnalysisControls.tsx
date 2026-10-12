@@ -48,6 +48,7 @@ interface AnalysisControlsProps {
   canSubmit: boolean;
   geographicMode: GeographicMode;
   onGeographicModeChange: (mode: GeographicMode) => void;
+  children?: React.ReactNode;
 }
 
 export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
@@ -60,6 +61,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
   canSubmit,
   geographicMode,
   onGeographicModeChange,
+  children,
 }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const startYearId = useId();
@@ -73,13 +75,15 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
   const isPeriodValid = isSpanValid && isYearOrderValid && isMinYearValid && isMaxYearValid;
 
   return (
-    <div className="space-y-4">
-      {/* 1. Geographic Selection Mode Toggle */}
-      <div>
-        <label className="block text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5">
-          GEOGRAPHIC SELECTION METHOD
-        </label>
-        <div className="grid grid-cols-3 gap-1 p-1 bg-[#090D16] border border-[#334155] rounded text-xs">
+    <div className="flex flex-col h-full justify-between">
+      {/* Scrollable Filters Body */}
+      <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-1">
+        {/* 1. Geographic Selection Mode Toggle (FIRST in sidebar) */}
+        <div>
+          <label className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wider mb-1.5">
+            GEOGRAPHIC SELECTION METHOD
+          </label>
+          <div className="grid grid-cols-3 gap-1 p-1 bg-[#090D16] border border-[#334155] rounded-md text-xs">
           <button
             type="button"
             onClick={() => onGeographicModeChange("search")}
@@ -119,7 +123,10 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
         </div>
       </div>
 
-      {/* 2. Hazard Scope (Explicitly Heatwave Only) */}
+      {/* 2. Active Geographic Mode Controls (Rendered immediately after Selection Method) */}
+      {children && <div>{children}</div>}
+
+      {/* 3. Hazard Scope (Explicitly Heatwave Only) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">
@@ -458,15 +465,16 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
           </div>
         )}
       </div>
+    </div>
 
-      {/* 5. Execution Controls */}
-      <div className="pt-2">
+    {/* 5. Execution Controls (Sticky Bottom Shelf) */}
+    <div className="pt-3 mt-3 border-t border-[#1E293B] bg-[#090D16] shrink-0">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onSubmit}
             disabled={!canSubmit || isLoading || !isPeriodValid}
-            className="flex-1 py-2.5 px-4 rounded font-semibold text-white bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:brightness-110 active:scale-[0.985] shadow-[0_0_16px_-2px_rgba(249,115,22,0.35)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2 text-xs"
+            className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:brightness-110 active:scale-[0.985] shadow-[0_0_16px_-2px_rgba(249,115,22,0.35)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2 text-xs"
           >
             {isLoading ? (
               <>
@@ -486,7 +494,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
               type="button"
               onClick={onCancel}
               title="Cancel analysis request"
-              className="p-2.5 rounded border border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40 text-rose-300 transition-colors cursor-pointer"
+              className="p-2.5 rounded-lg border border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40 text-rose-300 transition-colors cursor-pointer"
             >
               <Square className="w-3.5 h-3.5 fill-rose-300" />
             </button>
@@ -497,14 +505,14 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             onClick={onReset}
             title="Reset filters to default"
             disabled={isLoading}
-            className="p-2.5 rounded bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1E293B]/80 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+            className="p-2.5 rounded-lg bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1E293B]/80 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {!canSubmit && !isLoading && (
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-[#94A3B8] bg-[#0F172A] p-2 rounded border border-[#334155]">
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-[#94A3B8] bg-[#0F172A] p-2 rounded-lg border border-[#334155]">
             <Info className="w-3.5 h-3.5 text-[#F97316] shrink-0" />
             <span>
               {geographicMode === "search"

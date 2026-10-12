@@ -56,12 +56,12 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
       attributionControl: true,
     });
 
-    // Dark-themed CartoDB Positron / OSM tiles for professional climate dashboard aesthetics
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+    // Open-source OpenStreetMap tiles (free, public, no API key required) styled with dark-mode filter
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      subdomains: ["a", "b", "c"],
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a>',
-      maxZoom: 18,
-      subdomains: "abcd",
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+      maxZoom: 19,
     }).addTo(map);
 
     mapInstanceRef.current = map;
@@ -230,8 +230,8 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
       {/* Map Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-zinc-300 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-orange-400" />
+          <span className="font-semibold text-[#F8FAFC] flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-[#F97316]" />
             Geographic Boundary Map
           </span>
           {mode === "bbox" && (
@@ -259,10 +259,10 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
                   setDrawMode("ready");
                 }
               }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1 ${
                 drawMode !== "view"
-                  ? "bg-orange-500/20 text-orange-300 border-orange-500/40"
-                  : "bg-zinc-800 text-zinc-300 border-zinc-700 hover:text-white"
+                  ? "bg-[#F97316]/20 text-[#FB923C] border-[#F97316]/40"
+                  : "bg-[#1E293B] text-[#94A3B8] border-[#334155] hover:text-[#F8FAFC]"
               }`}
             >
               <Crosshair className="w-3 h-3" />
@@ -277,12 +277,12 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
       </div>
 
       {/* Map Canvas */}
-      <div className="relative rounded-xl overflow-hidden border border-zinc-800 shadow-md">
-        <div ref={mapContainerRef} className="h-64 sm:h-72 w-full z-0 bg-zinc-950" />
+      <div className="relative rounded-xl overflow-hidden border border-[#334155] shadow-md">
+        <div ref={mapContainerRef} className="h-64 sm:h-72 w-full z-0 bg-[#090D16]" />
 
         {/* Draw mode banner */}
         {drawMode !== "view" && (
-          <div className="absolute top-2 left-2 right-2 z-1000 p-2 rounded-lg bg-zinc-900/90 border border-orange-500/40 text-xs text-orange-300 backdrop-blur-md flex items-center justify-between shadow-lg">
+          <div className="absolute top-2 left-2 right-2 z-1000 p-2 rounded-lg bg-[#0F172A]/90 border border-[#F97316]/40 text-xs text-[#FB923C] backdrop-blur-md flex items-center justify-between shadow-lg">
             <span>
               {drawMode === "ready"
                 ? "Step 1: Click the map to place the first corner of your bounding box."
@@ -294,7 +294,7 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
                 setDrawMode("view");
                 setFirstCorner(null);
               }}
-              className="text-[11px] underline text-zinc-400 hover:text-zinc-200 cursor-pointer ml-2"
+              className="text-[11px] underline text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer ml-2"
             >
               Cancel
             </button>
@@ -303,8 +303,8 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
       </div>
 
       {/* Accessible Non-Map Coordinates Summary */}
-      <div className="p-3 rounded-xl bg-zinc-950/70 border border-zinc-800/80 text-xs space-y-1.5 font-mono">
-        <div className="text-[11px] text-zinc-400 font-sans font-medium flex items-center justify-between">
+      <div className="p-3 rounded-lg bg-[#0F172A] border border-[#334155] text-xs space-y-1.5 font-mono">
+        <div className="text-[11px] text-[#94A3B8] font-sans font-medium flex items-center justify-between">
           <span>Active Bounding Box Coordinates (Accessible Representation):</span>
           {isAreaExceeded && (
             <span className="text-rose-400 flex items-center gap-1 font-sans text-[11px]">
@@ -312,27 +312,27 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
             </span>
           )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-zinc-300 text-[11px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[#94A3B8] text-[11px]">
           <div>
-            <span className="text-zinc-500">South (Min Lat):</span> {bboxValues.min_lat.toFixed(4)}°
+            <span className="text-[#64748B]">South (Min Lat):</span> {bboxValues.min_lat.toFixed(4)}°
           </div>
           <div>
-            <span className="text-zinc-500">North (Max Lat):</span> {bboxValues.max_lat.toFixed(4)}°
+            <span className="text-[#64748B]">North (Max Lat):</span> {bboxValues.max_lat.toFixed(4)}°
           </div>
           <div>
-            <span className="text-zinc-500">West (Min Lon):</span> {bboxValues.min_lon.toFixed(4)}°
+            <span className="text-[#64748B]">West (Min Lon):</span> {bboxValues.min_lon.toFixed(4)}°
           </div>
           <div>
-            <span className="text-zinc-500">East (Max Lon):</span> {bboxValues.max_lon.toFixed(4)}°
+            <span className="text-[#64748B]">East (Max Lon):</span> {bboxValues.max_lon.toFixed(4)}°
           </div>
         </div>
       </div>
 
       {/* Climatological Resolution Disclaimer */}
-      <div className="p-2.5 rounded-lg bg-zinc-900/40 border border-zinc-800/60 text-[11px] text-zinc-400 flex items-start gap-2">
-        <ShieldAlert className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
+      <div className="p-2.5 rounded-lg bg-[#0F172A]/40 border border-[#1E293B] text-[11px] text-[#64748B] flex items-start gap-2">
+        <ShieldAlert className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" />
         <span>
-          <strong>Scientific Spatial Scope:</strong> The regional analysis aggregates an ERA5 atmospheric grid
+          <strong className="text-[#94A3B8]">Scientific Spatial Scope:</strong> The regional analysis aggregates an ERA5 atmospheric grid
           (0.25° resolution, up to 9 sample points for boxes ≤ 25 deg²). It does not provide high-resolution local micro-climate modeling.
         </span>
       </div>
