@@ -263,7 +263,7 @@ class AnalysisService:
         )
 
         # 3. Ingest/retrieve observations with concurrency throttling to prevent upstream rate limiting
-        sem = asyncio.Semaphore(2)
+        sem = asyncio.Semaphore(1)
 
         async def fetch_sample_point(point: GeoLocation) -> list[DailyObservation]:
             async with sem:
@@ -273,7 +273,7 @@ class AnalysisService:
                     end_date=full_end_date,
                     model=query.model,
                 )
-                await asyncio.sleep(0.15)
+                await asyncio.sleep(0.3)
                 return res
 
         results = await asyncio.gather(*(fetch_sample_point(p) for p in sample_points))

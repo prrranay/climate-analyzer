@@ -103,6 +103,9 @@ class OpenMeteoHistoricalWeatherClient(HistoricalWeatherProviderProtocol):
             "timezone": "UTC",
             "models": api_model_param,
         }
+        settings = get_settings()
+        if settings.open_meteo_api_key:
+            params["apikey"] = settings.open_meteo_api_key
 
         raw_payload = await self._execute_request(params)
         validated_response = self._validate_payload(raw_payload)
@@ -118,6 +121,7 @@ class OpenMeteoHistoricalWeatherClient(HistoricalWeatherProviderProtocol):
         """Execute request with retries, exponential backoff, and rate-limit handling."""
         client = self._get_http_client()
         attempt = 0
+        max_429_retries = max(self._max_retries, 5)
 
         while True:
             attempt += 1
@@ -133,16 +137,16 @@ class OpenMeteoHistoricalWeatherClient(HistoricalWeatherProviderProtocol):
                     retry_after_header = response.headers.get("Retry-After")
                     retry_after = self._parse_retry_after(retry_after_header)
 
-                    if attempt <= self._max_retries:
+                    if attempt <= max_429_retries:
                         base_backoff = (
                             retry_after
                             if retry_after is not None and retry_after > 0
-                            else max(self._backoff_factor * (2 ** (attempt - 1)), 2.0 * attempt)
+                            else max(self._backoff_factor * (2 ** (attempt - 1)), 3.0 * attempt)
                         )
-                        sleep_time = min(base_backoff + random.uniform(0.2, 0.8), 60.0)
+                        sleep_time = min(base_backoff + random.uniform(0.3, 1.2), 60.0)
                         logger.warning(
                             f"Open-Meteo rate limit (429) hit. Backing off for {sleep_time:.2f}s "
-                            f"(attempt {attempt}/{self._max_retries})"
+                            f"(attempt {attempt}/{max_429_retries})"
                         )
                         await asyncio.sleep(sleep_time)
                         continue

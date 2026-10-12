@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     redis_socket_connect_timeout: float = Field(default=5.0, ge=0.1)
 
     # Open-Meteo API settings
+    open_meteo_api_key: str | None = Field(
+        default=None,
+        description="Optional Open-Meteo Commercial API key",
+    )
     open_meteo_historical_api_url: str = Field(
         default="https://archive-api.open-meteo.com/v1/archive",
         description="Open-Meteo Historical Weather API base endpoint",
