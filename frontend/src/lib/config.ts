@@ -5,8 +5,7 @@
  * browser bundle. Never place secrets in public env vars.
  */
 
-function getEnv(name: string, fallback: string): string {
-  const value = process.env[name];
+function cleanApiUrl(value: string | undefined, fallback: string): string {
   if (!value) {
     return fallback;
   }
@@ -26,7 +25,10 @@ function getEnv(name: string, fallback: string): string {
 }
 
 /** Validated, trailing-slash-stripped API base URL. */
-export const API_BASE_URL = getEnv("NEXT_PUBLIC_API_BASE_URL", "http://localhost:8000");
+export const API_BASE_URL = cleanApiUrl(
+  process.env.NEXT_PUBLIC_API_BASE_URL,
+  "http://localhost:8000"
+);
 
 /* ------------------------------------------------------------------ */
 /*  Constants mirroring backend validation rules                      */
