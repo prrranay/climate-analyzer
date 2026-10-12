@@ -27,7 +27,10 @@ def generate_bounding_box_grid(
         centroid_lon = round((box.min_longitude + box.max_longitude) / 2.0, 4)
         return [GeoLocation(latitude=centroid_lat, longitude=centroid_lon)]
 
-    # Determine optimal grid dimensions (n_lat, n_lon) maximizing points <= max_points
+    # Cap sample points to 4 for regional boxes <= 5 deg² to ensure fast response and prevent upstream rate limits
+    effective_max = 4 if (box.area_square_degrees <= 5.0 and max_points > 4) else max_points
+
+    # Determine optimal grid dimensions (n_lat, n_lon) maximizing points <= effective_max
     # while matching the aspect ratio (lon_span / lat_span)
     target_aspect = box.lon_span / max(box.lat_span, 1e-6)
 
@@ -35,9 +38,9 @@ def generate_bounding_box_grid(
     best_diff = float("inf")
 
     # Explore candidate row and column counts
-    for r in range(1, int(np.sqrt(max_points)) + 3):
-        for c in range(1, max_points + 1):
-            if r * c <= max_points and r * c >= 2:
+    for r in range(1, int(np.sqrt(effective_max)) + 3):
+        for c in range(1, effective_max + 1):
+            if r * c <= effective_max and r * c >= 2:
                 aspect = c / r
                 diff = abs(aspect - target_aspect)
                 # Favor higher point counts that don't exceed max_points

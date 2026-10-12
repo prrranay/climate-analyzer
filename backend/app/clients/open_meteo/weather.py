@@ -134,8 +134,12 @@ class OpenMeteoHistoricalWeatherClient(HistoricalWeatherProviderProtocol):
                     retry_after = self._parse_retry_after(retry_after_header)
 
                     if attempt <= self._max_retries:
-                        sleep_time = retry_after or (self._backoff_factor * (2 ** (attempt - 1)))
-                        sleep_time = min(sleep_time + random.uniform(0.1, 0.5), 60.0)
+                        base_backoff = (
+                            retry_after
+                            if retry_after is not None and retry_after > 0
+                            else max(self._backoff_factor * (2 ** (attempt - 1)), 2.0 * attempt)
+                        )
+                        sleep_time = min(base_backoff + random.uniform(0.2, 0.8), 60.0)
                         logger.warning(
                             f"Open-Meteo rate limit (429) hit. Backing off for {sleep_time:.2f}s "
                             f"(attempt {attempt}/{self._max_retries})"

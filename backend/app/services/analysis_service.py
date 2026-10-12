@@ -262,17 +262,21 @@ class AnalysisService:
             max_points=self._settings.max_bbox_sample_points,
         )
 
-        # 3. Ingest/retrieve observations concurrently for every canonical sample point
-        fetch_tasks = [
-            self._weather_service.ensure_historical_observations(
-                location=point,
-                start_date=full_start_date,
-                end_date=full_end_date,
-                model=query.model,
-            )
-            for point in sample_points
-        ]
-        results = await asyncio.gather(*fetch_tasks)
+        # 3. Ingest/retrieve observations with concurrency throttling to prevent upstream rate limiting
+        sem = asyncio.Semaphore(2)
+
+        async def fetch_sample_point(point: GeoLocation) -> list[DailyObservation]:
+            async with sem:
+                res = await self._weather_service.ensure_historical_observations(
+                    location=point,
+                    start_date=full_start_date,
+                    end_date=full_end_date,
+                    model=query.model,
+                )
+                await asyncio.sleep(0.15)
+                return res
+
+        results = await asyncio.gather(*(fetch_sample_point(p) for p in sample_points))
         grid_observations = {
             point.coordinate_key: obs for point, obs in zip(sample_points, results, strict=True)
         }
