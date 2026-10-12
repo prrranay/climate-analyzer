@@ -248,7 +248,7 @@ async function executeRequest<T>(
   options: RequestOptions = {}
 ): Promise<T> {
   const url = buildApiUrl(path, params, options.baseUrl);
-  const timeoutMs = options.timeoutMs ?? 30000;
+  const timeoutMs = options.timeoutMs ?? 60000;
 
   // Setup abort controller with timeout handling
   const controller = new AbortController();
@@ -302,20 +302,26 @@ async function executeRequest<T>(
       throw err;
     }
 
+    const isTimeout =
+      controller.signal.reason === "REQUEST_TIMEOUT" ||
+      (typeof controller.signal.reason === "object" &&
+        controller.signal.reason !== null &&
+        "message" in controller.signal.reason &&
+        (controller.signal.reason as { message: string }).message === "REQUEST_TIMEOUT") ||
+      (err instanceof Error && err.message === "REQUEST_TIMEOUT");
+
     const isAbort =
-      err instanceof DOMException && err.name === "AbortError" ||
-      (err instanceof Error && err.name === "AbortError");
+      isTimeout ||
+      (err instanceof DOMException && err.name === "AbortError") ||
+      (err instanceof Error && err.name === "AbortError") ||
+      controller.signal.aborted;
 
     if (isAbort) {
-      const isTimeout =
-        controller.signal.reason?.message === "REQUEST_TIMEOUT" ||
-        (err instanceof Error && err.message === "REQUEST_TIMEOUT");
-
       if (isTimeout) {
         throw new ApiError({
           status: 408,
           errorCode: "REQUEST_TIMEOUT",
-          message: `Request timed out after ${timeoutMs / 1000} seconds.`,
+          message: `The analysis request timed out (${timeoutMs / 1000}s) while ingesting historical climate records. Please retry in a few moments as data is cached.`,
           isTimeout: true,
         });
       }
@@ -393,7 +399,10 @@ export const apiClient = {
         min_consecutive_days: params.min_consecutive_days,
         model: params.model,
       },
-      options
+      {
+        timeoutMs: 60000,
+        ...options,
+      }
     );
   },
 
@@ -420,7 +429,10 @@ export const apiClient = {
         min_consecutive_days: params.min_consecutive_days,
         model: params.model,
       },
-      options
+      {
+        timeoutMs: 90000, // Allow up to 90s for cold upstream multi-point ERA5 ingestion
+        ...options,
+      }
     );
   },
 
