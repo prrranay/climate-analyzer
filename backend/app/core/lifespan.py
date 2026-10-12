@@ -10,6 +10,7 @@ from app.cache.redis import redis_manager
 from app.clients.http_client import http_client_manager
 from app.core.config import Settings, get_settings
 from app.db.mongo import mongo_manager
+from app.db.repositories import MongoCoverageRepository, MongoWeatherRepository
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     if mongo_ok:
         logger.info("MongoDB connected successfully.")
         try:
+            db = mongo_manager.get_database()
             await MongoWeatherRepository(db).ensure_indexes()
             await MongoCoverageRepository(db).ensure_indexes()
             logger.info("MongoDB indexes verified and migrations completed successfully.")
