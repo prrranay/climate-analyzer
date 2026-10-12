@@ -327,9 +327,10 @@ export default function Home() {
                   <span>
                     Preserving last successful analysis for{" "}
                     <strong className="text-zinc-100">
-                      {"location" in lastSuccessfulData
-                        ? lastSuccessfulData.location.name || "Custom Coordinate"
-                        : "Regional Bounding Box"}{" "}
+                      {activeQuerySnapshot?.targetName ||
+                        ("location" in lastSuccessfulData
+                          ? lastSuccessfulData.location.name || "Custom Coordinate"
+                          : "Regional Bounding Box")}{" "}
                       ({lastSuccessfulData.analysis_window.start_year}–{lastSuccessfulData.analysis_window.end_year})
                     </strong>.
                   </span>
@@ -376,8 +377,8 @@ export default function Home() {
                     </span>
                     <h2 className="text-xl font-bold text-zinc-100 break-words">
                       {"location" in displayedData
-                        ? displayedData.location.name || "Custom Coordinate"
-                        : "Regional Bounding Box"}
+                        ? (activeQuerySnapshot?.targetName || displayedData.location.name || "Custom Coordinate")
+                        : (activeQuerySnapshot?.targetName || "Regional Bounding Box")}
                       {"location" in displayedData && displayedData.location.country && (
                         <span className="text-zinc-400 font-normal text-sm ml-2">
                           ({displayedData.location.admin1 ? `${displayedData.location.admin1}, ` : ""}
@@ -404,7 +405,7 @@ export default function Home() {
                 </div>
 
                 {/* Key Summary Cards */}
-                <SummaryStats data={displayedData} />
+                <SummaryStats data={displayedData} regionName={activeQuerySnapshot?.targetName} />
 
                 {/* Data Quality & Completeness Diagnostics Banner */}
                 <DataQualityBanner

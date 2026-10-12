@@ -272,3 +272,36 @@ async def test_live_weather_service_stored_range_reuse(real_mongo_db):
     )
     expected_days3 = (date(2004, 12, 31) - date(2000, 1, 1)).days + 1
     assert len(obs3) == expected_days3
+
+
+@pytest.mark.asyncio
+async def test_mongo_weather_repository_ensure_indexes_raises_runtime_error_on_failure():
+    """Verify that MongoWeatherRepository.ensure_indexes raises RuntimeError when index operations fail."""
+    from unittest.mock import AsyncMock, MagicMock
+    from pymongo.errors import PyMongoError
+
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.index_information = AsyncMock(side_effect=PyMongoError("Database index corrupt or disk full"))
+    mock_db.__getitem__.return_value = mock_coll
+
+    repo = MongoWeatherRepository(mock_db)
+    with pytest.raises(RuntimeError, match="Critical index initialization failed in MongoWeatherRepository"):
+        await repo.ensure_indexes()
+
+
+@pytest.mark.asyncio
+async def test_mongo_coverage_repository_ensure_indexes_raises_runtime_error_on_failure():
+    """Verify that MongoCoverageRepository.ensure_indexes raises RuntimeError when index operations fail."""
+    from unittest.mock import AsyncMock, MagicMock
+    from pymongo.errors import PyMongoError
+
+    mock_db = MagicMock()
+    mock_coll = MagicMock()
+    mock_coll.create_index = AsyncMock(side_effect=PyMongoError("Unique index key conflict"))
+    mock_db.__getitem__.return_value = mock_coll
+
+    repo = MongoCoverageRepository(mock_db)
+    with pytest.raises(RuntimeError, match="Critical index initialization failed in MongoCoverageRepository"):
+        await repo.ensure_indexes()
+

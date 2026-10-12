@@ -364,3 +364,149 @@ def test_complete_engine_pipeline():
     assert len(result.annual_metrics) == 6
     assert result.annual_metrics[-1].event_count == 1
     assert len(result.insights) > 0
+
+
+def test_boundary_events_crossing_start_of_analysis_window():
+    """Verify that an event starting prior to the analysis window with days extending into it is detected and attributed."""
+    location = GeoLocation(latitude=40.0, longitude=-75.0, name="BoundaryStartTest")
+    baseline_cfg = BaselineConfig(baseline_start_year=2000, baseline_end_year=2004)
+
+    # Observations from 2000-01-01 to 2007-12-31, baseline at 20°C
+    observations: list[DailyWeatherObservation] = []
+    for yr in range(2000, 2008):
+        curr = date(yr, 1, 1)
+        end = date(yr, 12, 31)
+        while curr <= end:
+            temp = 20.0
+            # Event crosses start boundary: 2004-12-29 to 2005-01-03 (6 days: 3 in 2004, 3 in 2005)
+            if (curr >= date(2004, 12, 29)) and (curr <= date(2005, 1, 3)):
+                temp = 35.0
+            observations.append(DailyWeatherObservation(date=curr, temp_max=temp))
+            curr += timedelta(days=1)
+
+    result = run_climate_hazard_analysis(
+        location=location,
+        observations=observations,
+        baseline_config=baseline_cfg,
+        analysis_start_year=2005,
+        analysis_end_year=2007,
+    )
+
+    # 1. Event must be captured in scoped_events
+    assert len(result.events) == 1
+    event = result.events[0]
+    assert event.start_date == date(2004, 12, 29)
+    assert event.end_date == date(2005, 1, 3)
+    assert event.duration_days == 6
+
+    # 2. Rule: Event count belongs to inception year (2004), so 2005 event_count is 0
+    m_2005 = next(m for m in result.annual_metrics if m.year == 2005)
+    assert m_2005.event_count == 0
+    assert m_2005.mean_duration_days is None
+    assert m_2005.max_duration_days is None
+
+    # 3. Rule: Heatwave days belong to the actual calendar year: 3 days in 2005
+    assert m_2005.total_heatwave_days == 3
+    assert m_2005.cumulative_intensity is not None
+    assert m_2005.cumulative_intensity > 0
+
+
+def test_boundary_events_crossing_end_of_analysis_window():
+    """Verify that an event starting at the end of the analysis window and extending past it is not truncated."""
+    location = GeoLocation(latitude=40.0, longitude=-75.0, name="BoundaryEndTest")
+    baseline_cfg = BaselineConfig(baseline_start_year=2000, baseline_end_year=2004)
+
+    # Observations from 2000-01-01 to 2008-01-15 (including boundary buffer after 2007-12-31)
+    observations: list[DailyWeatherObservation] = []
+    for yr in range(2000, 2008):
+        curr = date(yr, 1, 1)
+        end = date(yr, 12, 31)
+        while curr <= end:
+            temp = 20.0
+            # Event crosses end boundary: 2007-12-30 to 2008-01-04 (6 days: 2 in 2007, 4 in 2008)
+            if curr >= date(2007, 12, 30):
+                temp = 36.0
+            observations.append(DailyWeatherObservation(date=curr, temp_max=temp))
+            curr += timedelta(days=1)
+
+    # Add January 2008 boundary buffer days
+    for d in range(1, 15):
+        temp = 36.0 if d <= 4 else 20.0
+        observations.append(DailyWeatherObservation(date=date(2008, 1, d), temp_max=temp))
+
+    result = run_climate_hazard_analysis(
+        location=location,
+        observations=observations,
+        baseline_config=baseline_cfg,
+        analysis_start_year=2005,
+        analysis_end_year=2007,
+    )
+
+    # 1. Event must be fully detected without truncation
+    assert len(result.events) == 1
+    event = result.events[0]
+    assert event.start_date == date(2007, 12, 30)
+    assert event.end_date == date(2008, 1, 4)
+    assert event.duration_days == 6
+
+    # 2. Rule: Event count belongs to inception year (2007)
+    m_2007 = next(m for m in result.annual_metrics if m.year == 2007)
+    assert m_2007.event_count == 1
+    assert m_2007.mean_duration_days == 6.0
+    assert m_2007.max_duration_days == 6
+
+    # 3. Rule: Heatwave days belong to the calendar year: only 2 days in 2007 (Dec 30 & 31)
+    assert m_2007.total_heatwave_days == 2
+
+
+def test_boundary_events_dual_crossings_regression():
+    """Verify concurrent handling of boundary crossings at both start and end of the analysis window."""
+    location = GeoLocation(latitude=40.0, longitude=-75.0, name="DualBoundaryTest")
+    baseline_cfg = BaselineConfig(baseline_start_year=2000, baseline_end_year=2004)
+
+    observations: list[DailyWeatherObservation] = []
+    for yr in range(2000, 2008):
+        curr = date(yr, 1, 1)
+        end = date(yr, 12, 31)
+        while curr <= end:
+            temp = 20.0
+            # Event 1: crosses start window (2004-12-30 to 2005-01-03 = 5 days: 2 in 2004, 3 in 2005)
+            if date(2004, 12, 30) <= curr <= date(2005, 1, 3):
+                temp = 34.0
+            # Event 2: crosses end window (2007-12-30 to 2008-01-02 = 4 days: 2 in 2007, 2 in 2008)
+            elif curr >= date(2007, 12, 30):
+                temp = 35.0
+            observations.append(DailyWeatherObservation(date=curr, temp_max=temp))
+            curr += timedelta(days=1)
+
+    # Boundary buffer for Jan 2008
+    for d in range(1, 10):
+        temp = 35.0 if d <= 2 else 20.0
+        observations.append(DailyWeatherObservation(date=date(2008, 1, d), temp_max=temp))
+
+    result = run_climate_hazard_analysis(
+        location=location,
+        observations=observations,
+        baseline_config=baseline_cfg,
+        analysis_start_year=2005,
+        analysis_end_year=2007,
+    )
+
+    assert len(result.events) == 2
+    m_2005 = next(m for m in result.annual_metrics if m.year == 2005)
+    m_2006 = next(m for m in result.annual_metrics if m.year == 2006)
+    m_2007 = next(m for m in result.annual_metrics if m.year == 2007)
+
+    # 2005: 0 events started, 3 days from prior-year carryover
+    assert m_2005.event_count == 0
+    assert m_2005.total_heatwave_days == 3
+
+    # 2006: 0 events, 0 days
+    assert m_2006.event_count == 0
+    assert m_2006.total_heatwave_days == 0
+
+    # 2007: 1 event started, 2 days in 2007
+    assert m_2007.event_count == 1
+    assert m_2007.total_heatwave_days == 2
+    assert m_2007.max_duration_days == 4
+

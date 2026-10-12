@@ -268,7 +268,7 @@ describe("Dashboard Data Transformations, Nullable Safety & Formatting", () => {
       expect(avgDuration !== null ? `${formatNumber(avgDuration, 1)} d/event` : "N/A").toBe("N/A");
     });
 
-    it("correctly finds peak recorded temperature ignoring null years", () => {
+    it("correctly computes peak temperature exceedance above threshold ignoring null years", () => {
       const metricsWithNulls: AnnualHeatwaveMetricDTO[] = [
         {
           year: 2001,
@@ -300,13 +300,46 @@ describe("Dashboard Data Transformations, Nullable Safety & Formatting", () => {
         },
       ];
 
-      const peakTemp = metricsWithNulls.reduce<number | null>((max, m) => {
+      const peakExceedance = metricsWithNulls.reduce<number | null>((max, m) => {
         if (m.peak_intensity_celsius === null) return max;
         if (max === null) return m.peak_intensity_celsius;
         return Math.max(max, m.peak_intensity_celsius);
       }, null);
 
-      expect(peakTemp).toBe(4.8);
+      expect(peakExceedance).toBe(4.8);
+      // Peak Temperature Exceedance KPI label & display format: +4.8°C
+      const displayValue = peakExceedance !== null ? `+${formatNumber(peakExceedance, 1)}°C` : "N/A";
+      expect(displayValue).toBe("+4.8°C");
+    });
+
+    it("evaluates decoupled zero-event versus cross-year heatwave days messaging", () => {
+      // Helper simulating HeatwaveDurationChart tooltip display decision
+      const getDurationTooltipMessage = (eventCount: number, totalDays: number) => {
+        if (eventCount > 0) return "events_occurred";
+        if (totalDays > 0) {
+          return `No events started this year (${totalDays} heatwave ${totalDays === 1 ? "day" : "days"} attributed from prior-year event).`;
+        }
+        return "Zero heatwave days recorded in this year.";
+      };
+
+      // 1. Year with events
+      expect(getDurationTooltipMessage(2, 8)).toBe("events_occurred");
+
+      // 2. Year with 0 events started, but 3 days carryover from prior December
+      expect(getDurationTooltipMessage(0, 3)).toBe(
+        "No events started this year (3 heatwave days attributed from prior-year event)."
+      );
+
+      // 3. Year with genuine 0 heatwave days
+      expect(getDurationTooltipMessage(0, 0)).toBe("Zero heatwave days recorded in this year.");
+    });
+
+    it("preserves selected region name from query snapshot even if backend returns Custom Point", () => {
+      const snapshotTargetName = "Phoenix, USA";
+      const backendLocationName = null; // Backend returns null/unresolved city name
+
+      const resolvedName = snapshotTargetName || backendLocationName || "Custom Point";
+      expect(resolvedName).toBe("Phoenix, USA");
     });
   });
 

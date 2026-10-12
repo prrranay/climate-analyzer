@@ -58,9 +58,11 @@ def run_climate_hazard_analysis(
         min_consecutive_days=min_consecutive_days,
     )
 
-    # 3. Filter events to the requested analysis window
+    # 3. Filter events touching the requested analysis window
     scoped_events = [
-        ev for ev in events if analysis_start_year <= ev.start_date.year <= analysis_end_year
+        ev
+        for ev in events
+        if ev.start_date.year <= analysis_end_year and ev.end_date.year >= analysis_start_year
     ]
 
     # 4. Filter observations for the analysis span to calculate annual metrics

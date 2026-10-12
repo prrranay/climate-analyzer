@@ -42,11 +42,13 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     mongo_ok = await mongo_manager.ping()
     if mongo_ok:
         logger.info("MongoDB connected successfully.")
-        db = mongo_manager.get_database()
-        from app.db.repositories import MongoCoverageRepository, MongoWeatherRepository
-
-        await MongoWeatherRepository(db).ensure_indexes()
-        await MongoCoverageRepository(db).ensure_indexes()
+        try:
+            await MongoWeatherRepository(db).ensure_indexes()
+            await MongoCoverageRepository(db).ensure_indexes()
+            logger.info("MongoDB indexes verified and migrations completed successfully.")
+        except Exception as exc:
+            logger.critical("MongoDB initialization failed: %s", exc, exc_info=True)
+            raise RuntimeError(f"Database index/migration failure: {exc}") from exc
     else:
         logger.warning("MongoDB ping failed on startup. Will retry on demand.")
 

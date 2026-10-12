@@ -74,6 +74,10 @@ const CustomDurationTooltip: React.FC<CustomDurationTooltipProps> = ({ active, p
               </span>
             </div>
           </>
+        ) : item.totalDays > 0 ? (
+          <div className="p-1.5 rounded bg-zinc-950 text-[11px] text-amber-300/90 border border-amber-500/20">
+            No events started this year ({item.totalDays} {item.totalDays === 1 ? "day" : "days"} attributed from prior-year event).
+          </div>
         ) : (
           <div className="p-1 rounded bg-zinc-950 text-[11px] text-zinc-400 italic">
             Zero heatwave days recorded in this year.

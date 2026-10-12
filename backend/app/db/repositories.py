@@ -80,10 +80,14 @@ class MongoWeatherRepository(WeatherRepositoryProtocol):
                 background=True,
             )
         except Exception as exc:
-            logger.warning(
-                "Failed to create/migrate indexes in MongoWeatherRepository: %s",
+            logger.error(
+                "Critical failure during index initialization or migration in MongoWeatherRepository: %s",
                 exc,
+                exc_info=True,
             )
+            raise RuntimeError(
+                f"Critical index initialization failed in MongoWeatherRepository: {exc}"
+            ) from exc
 
     async def upsert_observations(
         self,
@@ -217,7 +221,14 @@ class MongoCoverageRepository(CoverageMetadataRepositoryProtocol):
                 background=True,
             )
         except Exception as exc:
-            logger.warning("Failed to create indexes in MongoCoverageRepository: %s", exc)
+            logger.error(
+                "Critical failure creating indexes in MongoCoverageRepository: %s",
+                exc,
+                exc_info=True,
+            )
+            raise RuntimeError(
+                f"Critical index initialization failed in MongoCoverageRepository: {exc}"
+            ) from exc
 
     async def get_coverage(
         self,

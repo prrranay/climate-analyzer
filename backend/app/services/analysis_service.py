@@ -1,7 +1,7 @@
 import asyncio
 import hashlib
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 from app.cache.keys import generate_analysis_cache_key, generate_bbox_cache_key
 from app.core.config import Settings, get_settings
@@ -50,9 +50,17 @@ class AnalysisService:
         b_end = query.baseline_end_year or self._settings.baseline_end_year
         location = GeoLocation(latitude=query.latitude, longitude=query.longitude)
 
-        # 2. Determine required date span ensuring baseline and analysis are both available
-        full_start_date = min(date(query.start_year, 1, 1), date(b_start, 1, 1))
-        full_end_date = max(date(query.end_year, 12, 31), date(b_end, 12, 31))
+        # 2. Determine required date span ensuring baseline and analysis are both available,
+        # with boundary buffers to prevent event truncation across analysis year limits.
+        boundary_buffer_days = max(query.min_consecutive_days, 15)
+        full_start_date = min(
+            date(query.start_year, 1, 1) - timedelta(days=boundary_buffer_days),
+            date(b_start, 1, 1),
+        )
+        full_end_date = max(
+            date(query.end_year, 12, 31) + timedelta(days=boundary_buffer_days),
+            date(b_end, 12, 31),
+        )
 
         baseline_config = BaselineConfig(
             baseline_start_year=b_start,
@@ -230,8 +238,15 @@ class AnalysisService:
 
         b_start = query.baseline_start_year or self._settings.baseline_start_year
         b_end = query.baseline_end_year or self._settings.baseline_end_year
-        full_start_date = min(date(query.start_year, 1, 1), date(b_start, 1, 1))
-        full_end_date = max(date(query.end_year, 12, 31), date(b_end, 12, 31))
+        boundary_buffer_days = max(query.min_consecutive_days, 15)
+        full_start_date = min(
+            date(query.start_year, 1, 1) - timedelta(days=boundary_buffer_days),
+            date(b_start, 1, 1),
+        )
+        full_end_date = max(
+            date(query.end_year, 12, 31) + timedelta(days=boundary_buffer_days),
+            date(b_end, 12, 31),
+        )
 
         baseline_config = BaselineConfig(
             baseline_start_year=b_start,

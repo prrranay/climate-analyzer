@@ -1,14 +1,15 @@
 import React from "react";
-import { Flame, TrendingUp, Zap, Clock, ShieldCheck, MapPin, Calendar } from "lucide-react";
+import { Flame, TrendingUp, Thermometer, Clock, ShieldCheck, MapPin, Calendar } from "lucide-react";
 import { HeatwaveAnalysisResponse, BoundingBoxHeatwaveAnalysisResponse } from "@/types/api";
 import { isBoundingBoxResult } from "@/hooks/useHeatwaveAnalysis";
 import { formatNumber, formatSlope, formatPercent, getTrendDirectionBadge } from "@/lib/utils";
 
 interface SummaryStatsProps {
   data: HeatwaveAnalysisResponse | BoundingBoxHeatwaveAnalysisResponse;
+  regionName?: string;
 }
 
-export const SummaryStats: React.FC<SummaryStatsProps> = ({ data }) => {
+export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) => {
   const { annual_metrics, trends, data_quality, analysis_window } = data;
   const isBbox = isBoundingBoxResult(data);
 
@@ -21,8 +22,8 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data }) => {
   // 3. Average event duration across years where events occurred
   const avgEventDuration = totalEvents > 0 ? totalHeatwaveDays / totalEvents : null;
 
-  // 4. Peak recorded temperature across all years
-  const peakTemp = annual_metrics.reduce<number | null>((max, m) => {
+  // 4. Peak temperature exceedance above threshold across all years
+  const peakExceedance = annual_metrics.reduce<number | null>((max, m) => {
     if (m.peak_intensity_celsius === null) return max;
     if (max === null) return m.peak_intensity_celsius;
     return Math.max(max, m.peak_intensity_celsius);
@@ -34,10 +35,11 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data }) => {
     ? getTrendDirectionBadge(freqTrend.direction, freqTrend.is_significant)
     : null;
 
-  // 6. Region label
+  // 6. Region label (using the query snapshot name associated with the successful result)
+  const resolvedTargetName = regionName || (!isBbox ? data.location.name : null);
   const regionLabel = isBbox
     ? `Bounding Box (${data.bounding_box.min_latitude.toFixed(2)}° to ${data.bounding_box.max_latitude.toFixed(2)}° lat, ${data.bounding_box.min_longitude.toFixed(2)}° to ${data.bounding_box.max_longitude.toFixed(2)}° lon)`
-    : `${data.location.name || "Custom Point"}${data.location.country ? `, ${data.location.country}` : ""}`;
+    : `${resolvedTargetName || "Custom Point"}${data.location.country && (!resolvedTargetName || !resolvedTargetName.includes(data.location.country)) ? `, ${data.location.country}` : ""}`;
 
   return (
     <div className="space-y-4">
@@ -133,20 +135,23 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data }) => {
           <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/10 rounded-full blur-xl pointer-events-none" />
         </div>
 
-        {/* Peak Temp & Quality */}
+        {/* Peak Temperature Exceedance (Accurately reflects peak_intensity_celsius) */}
         <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md relative overflow-hidden group">
           <div className="flex items-center justify-between text-zinc-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Max Recorded Temp</span>
-            <Zap className="w-4 h-4 text-yellow-400 group-hover:scale-110 transition-transform" />
+            <span className="text-xs font-semibold uppercase tracking-wider">Peak Temp Exceedance</span>
+            <Thermometer className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-zinc-100 font-mono">
-            {peakTemp !== null ? `${formatNumber(peakTemp, 1)}°C` : "N/A"}
+            {peakExceedance !== null ? `+${formatNumber(peakExceedance, 1)}°C` : "N/A"}
           </div>
-          <div className="text-xs text-zinc-400 mt-1 flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{formatPercent(data_quality.completeness_percentage)} completeness</span>
+          <div className="text-xs text-zinc-400 mt-1 flex items-center justify-between gap-1">
+            <span className="text-[11px] text-zinc-500">Above moving threshold</span>
+            <div className="flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <span>{formatPercent(data_quality.completeness_percentage)}</span>
+            </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-yellow-500/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/10 rounded-full blur-xl pointer-events-none" />
         </div>
       </div>
     </div>
