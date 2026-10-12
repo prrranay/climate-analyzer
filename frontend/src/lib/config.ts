@@ -2,7 +2,7 @@
  * Runtime configuration validated at module load time.
  *
  * Uses NEXT_PUBLIC_ prefix so the value is inlined at build time for the
- * browser bundle.  Never place secrets in public env vars.
+ * browser bundle. Never place secrets in public env vars.
  */
 
 function getEnv(name: string, fallback: string): string {
@@ -10,7 +10,19 @@ function getEnv(name: string, fallback: string): string {
   if (!value) {
     return fallback;
   }
-  return value.replace(/\/+$/, ""); // strip trailing slashes
+  const clean = value.replace(/\/+$/, ""); // strip trailing slashes
+
+  // Enforce HTTPS for non-local production API communication
+  if (
+    process.env.NODE_ENV === "production" &&
+    clean.startsWith("http://") &&
+    !clean.includes("localhost") &&
+    !clean.includes("127.0.0.1")
+  ) {
+    return clean.replace(/^http:\/\//, "https://");
+  }
+
+  return clean;
 }
 
 /** Validated, trailing-slash-stripped API base URL. */

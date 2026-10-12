@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { AnnualHeatwaveMetricDTO, TrendStatisticsDTO, QualityStatus } from "@/types/api";
 import { formatNumber, formatSlope, getQualityStatusBadge } from "@/lib/utils";
-import { Flame, Info } from "lucide-react";
+import { Flame, Info, CheckCircle2, AlertTriangle, Clock } from "lucide-react";
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -27,6 +27,7 @@ interface CustomTooltipProps {
       expectedDays: number;
       isProvisional: boolean;
       isZeroEvent: boolean;
+      isExcludedFromTrend: boolean;
     };
   }>;
   label?: string | number;
@@ -38,7 +39,7 @@ const CustomFrequencyTooltip: React.FC<CustomTooltipProps> = ({ active, payload,
   const badge = getQualityStatusBadge(item.qualityStatus);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700/80 p-3.5 rounded-xl shadow-2xl text-xs space-y-2 backdrop-blur-md max-w-xs">
+    <div className="bg-zinc-900 border border-zinc-700/80 p-3.5 rounded-xl shadow-2xl text-xs space-y-2.5 backdrop-blur-md max-w-xs">
       <div className="flex items-center justify-between gap-3 border-b border-zinc-800 pb-1.5">
         <span className="font-bold text-zinc-100 font-mono text-sm">Year {label}</span>
         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${badge.className}`}>
@@ -63,15 +64,35 @@ const CustomFrequencyTooltip: React.FC<CustomTooltipProps> = ({ active, payload,
           </div>
         )}
 
-        {item.isProvisional && (
-          <div className="p-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300">
-            Provisional ongoing year ({item.usableDays}/{item.expectedDays} days recorded).
-          </div>
-        )}
+        {/* Scientific Regression Status Notice */}
+        <div
+          className={`p-1.5 rounded text-[10px] flex items-center gap-1.5 border ${
+            item.isExcludedFromTrend
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+          }`}
+        >
+          {item.isProvisional ? (
+            <>
+              <Clock className="w-3 h-3 text-amber-400 shrink-0" />
+              <span>Excluded from trend regression (ongoing year: {item.usableDays}/{item.expectedDays}d)</span>
+            </>
+          ) : item.isExcludedFromTrend ? (
+            <>
+              <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+              <span>Excluded from trend regression (insufficient observations)</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span>Included in OLS decadal trend regression</span>
+            </>
+          )}
+        </div>
 
-        <div className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-800/80 flex justify-between">
-          <span>Observation Integrity:</span>
-          <span className="font-mono text-zinc-300">{formatNumber(item.completeness, 1)}%</span>
+        <div className="text-[10px] text-zinc-400 pt-1 border-t border-zinc-800/80 flex justify-between font-mono">
+          <span>Observation Completeness:</span>
+          <span className="text-zinc-300">{formatNumber(item.completeness, 1)}%</span>
         </div>
       </div>
     </div>
@@ -95,37 +116,40 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
     );
   }
 
-  const chartData = metrics.map((m) => ({
-    year: m.year,
-    eventCount: m.event_count,
-    qualityStatus: m.quality_status,
-    completeness: m.completeness_percentage,
-    usableDays: m.usable_days,
-    expectedDays: m.expected_days,
-    isProvisional: m.quality_status === "provisional",
-    isZeroEvent: m.event_count === 0,
-  }));
+  const chartData = metrics.map((m) => {
+    const isProvisional = m.quality_status === "provisional";
+    const isExcluded = m.quality_status !== "reliable";
 
-  // Bar color based on data quality status
-  const getBarColor = (status: QualityStatus) => {
-    switch (status) {
-      case "provisional":
-        return "#f59e0b"; // Amber for ongoing calendar year
-      case "incomplete":
-        return "#ea580c"; // Dark orange for degraded
-      case "insufficient_data":
-        return "#71717a"; // Muted zinc for insufficient data
-      case "reliable":
-      default:
-        return "#f97316"; // Standard vibrant heat orange
-    }
-  };
+    return {
+      year: m.year,
+      eventCount: m.event_count,
+      qualityStatus: m.quality_status,
+      completeness: m.completeness_percentage,
+      usableDays: m.usable_days,
+      expectedDays: m.expected_days,
+      isProvisional,
+      isZeroEvent: m.event_count === 0,
+      isExcludedFromTrend: isExcluded,
+    };
+  });
 
   const hasTrend = frequencyTrend && frequencyTrend.slope_per_decade !== null;
+  const startYear = metrics[0]?.year;
+  const endYear = metrics[metrics.length - 1]?.year;
+  const totalEvents = metrics.reduce((acc, m) => acc + m.event_count, 0);
 
   return (
     <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md space-y-4">
-      {/* Header */}
+      {/* Screen Reader Summary */}
+      <div className="sr-only" aria-live="polite">
+        Annual heatwave frequency chart for years {startYear} through {endYear}.
+        Total recorded events: {totalEvents}.
+        {hasTrend
+          ? `Decadal trend slope is ${formatSlope(frequencyTrend!.slope_per_decade, 2)} ${frequencyTrend!.unit}.`
+          : "Insufficient reliable data to evaluate a statistical trend."}
+      </div>
+
+      {/* Header & Accessible Legend */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
@@ -137,13 +161,21 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
           </p>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center gap-3 text-[11px] text-zinc-400">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-orange-500" /> Reliable Year
+        {/* Legend with explicit texture/status patterns - not relying on color alone */}
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-400">
+          <span className="flex items-center gap-1.5" title="Included in OLS regression">
+            <span className="w-3 h-3 rounded-xs bg-orange-500 border border-orange-400" />
+            <span>Reliable (In Trend)</span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-amber-500" /> Provisional Year
+          <span className="flex items-center gap-1.5" title="Excluded from OLS regression">
+            <span
+              className="w-3 h-3 rounded-xs bg-amber-500/80 border border-amber-300"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 4px)",
+              }}
+            />
+            <span>Provisional (Excluded)</span>
           </span>
         </div>
       </div>
@@ -152,6 +184,20 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <defs>
+              {/* Pattern for provisional years so they are not distinguished by color alone */}
+              <pattern
+                id="provisionalStripes"
+                width="6"
+                height="6"
+                patternTransform="rotate(45 0 0)"
+                patternUnits="userSpaceOnUse"
+              >
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#f59e0b" strokeWidth="3" />
+                <line x1="0" y1="0" x2="6" y2="0" stroke="#78350f" strokeWidth="1" />
+              </pattern>
+            </defs>
+
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="year"
@@ -177,9 +223,29 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
             />
             <Tooltip content={<CustomFrequencyTooltip />} />
             <Bar dataKey="eventCount" radius={[4, 4, 0, 0]} maxBarSize={32}>
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getBarColor(entry.qualityStatus)} />
-              ))}
+              {chartData.map((entry, index) => {
+                if (entry.isProvisional) {
+                  return (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill="url(#provisionalStripes)"
+                      stroke="#f59e0b"
+                      strokeWidth={1}
+                    />
+                  );
+                }
+                if (entry.qualityStatus === "incomplete" || entry.qualityStatus === "insufficient_data") {
+                  return (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill="#71717a"
+                      stroke="#a1a1aa"
+                      strokeDasharray="2 2"
+                    />
+                  );
+                }
+                return <Cell key={`cell-${index}`} fill="#f97316" />;
+              })}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
@@ -196,18 +262,22 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
             {frequencyTrend!.is_significant ? (
               <span className="text-rose-400 font-semibold">(p &lt; 0.05 statistically significant)</span>
             ) : (
-              <span className="text-zinc-400">(statistically non-significant, p = {formatNumber(frequencyTrend!.p_value, 3)})</span>
+              <span className="text-zinc-400">
+                (statistically non-significant, p = {formatNumber(frequencyTrend!.p_value, 3)})
+              </span>
             )}
           </div>
         ) : (
           <div className="text-zinc-400 italic flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-zinc-500" />
-            <span>Insufficient reliable observation years (&lt;10y) to derive a statistically sound trend.</span>
+            <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <span>
+              Insufficient reliable observation years (&lt;10y) to derive a statistically sound trend.
+            </span>
           </div>
         )}
 
         <div className="text-[11px] text-zinc-500 font-mono">
-          Sample: {frequencyTrend?.sample_size_years ?? metrics.length} reliable years
+          Regression Sample: {frequencyTrend?.sample_size_years ?? metrics.length} reliable years
         </div>
       </div>
     </div>

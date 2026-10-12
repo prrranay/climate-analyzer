@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useMemo, useId } from "react";
-import { Grid, AlertCircle, CheckCircle2 } from "lucide-react";
+import React, { useMemo, useId, useState } from "react";
+import { Grid, AlertCircle, CheckCircle2, Map as MapIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { MAX_BBOX_AREA_SQ_DEGREES } from "@/lib/constants";
+import { GeographicMap } from "@/components/map/GeographicMap";
 
 export interface BoundingBoxValues {
   min_lat: number;
@@ -41,6 +42,7 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
   onChange,
   disabled = false,
 }) => {
+  const [showMap, setShowMap] = useState(true);
   const minLatId = useId();
   const maxLatId = useId();
   const minLonId = useId();
@@ -93,9 +95,15 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
         <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">
           Geographic Bounding Box
         </label>
-        <span className="text-[11px] text-zinc-400 font-mono">
-          Max Area: {MAX_BBOX_AREA_SQ_DEGREES} deg² (sample grid ≤ 9 pts)
-        </span>
+        <button
+          type="button"
+          onClick={() => setShowMap(!showMap)}
+          className="text-[11px] text-orange-400 hover:text-orange-300 flex items-center gap-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-500 rounded px-1"
+        >
+          <MapIcon className="w-3 h-3" />
+          <span>{showMap ? "Hide Map" : "Show Map"}</span>
+          {showMap ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+        </button>
       </div>
 
       {/* Preset Bounding Boxes */}
@@ -116,7 +124,20 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
         </div>
       </div>
 
-      {/* Coordinate Input Grid with Accessible Labels */}
+      {/* Interactive Leaflet Map for Bounding Box Selection */}
+      {showMap && (
+        <div className="pt-1">
+          <GeographicMap
+            mode="bbox"
+            bboxValues={values}
+            onBboxChange={onChange}
+            selectedLocation={null}
+            disabled={disabled}
+          />
+        </div>
+      )}
+
+      {/* Accessible Coordinate Input Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label htmlFor={minLatId} className="block text-xs text-zinc-400 mb-1">

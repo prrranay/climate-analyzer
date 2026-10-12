@@ -24,6 +24,10 @@ export function isBoundingBoxResult(
 export function useHeatwaveAnalysis() {
   const [status, setStatus] = useState<AnalysisStatus>("idle");
   const [data, setData] = useState<AnalysisResult | null>(null);
+  const [lastSuccessfulData, setLastSuccessfulData] = useState<AnalysisResult | null>(null);
+  const [pendingQuery, setPendingQuery] = useState<
+    HeatwaveAnalysisQuery | BoundingBoxAnalysisQuery | null
+  >(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -41,10 +45,11 @@ export function useHeatwaveAnalysis() {
       // 2. Increment request sequence ID to guard against out-of-order stale responses
       const currentSeq = ++sequenceRef.current;
 
-      // 3. Immediately clear prior results so they are not displayed for new parameters
+      // 3. Mark loading, clear active data but keep lastSuccessfulData for explicit fallback reference
       setStatus("loading");
       setData(null);
       setError(null);
+      setPendingQuery(params);
 
       try {
         const response = await apiClient.analyzeHeatwave(params, {
@@ -57,6 +62,8 @@ export function useHeatwaveAnalysis() {
         }
 
         setData(response);
+        setLastSuccessfulData(response);
+        setPendingQuery(null);
         setStatus("success");
         return response;
       } catch (err: unknown) {
@@ -76,10 +83,12 @@ export function useHeatwaveAnalysis() {
 
         // Do not flag intentional user cancellations as failed status
         if (apiErr.isCancelled) {
+          setPendingQuery(null);
           return null;
         }
 
         setError(apiErr);
+        setPendingQuery(null);
         setStatus("error");
         return null;
       }
@@ -91,32 +100,31 @@ export function useHeatwaveAnalysis() {
     async (
       params: BoundingBoxAnalysisQuery
     ): Promise<BoundingBoxHeatwaveAnalysisResponse | null> => {
-      // 1. Invalidate and abort previous in-flight request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      // 2. Increment request sequence ID
       const currentSeq = ++sequenceRef.current;
 
-      // 3. Immediately clear prior results
       setStatus("loading");
       setData(null);
       setError(null);
+      setPendingQuery(params);
 
       try {
         const response = await apiClient.analyzeHeatwaveBbox(params, {
           signal: controller.signal,
         });
 
-        // 4. Verify request was not superseded
         if (currentSeq !== sequenceRef.current) {
           return null;
         }
 
         setData(response);
+        setLastSuccessfulData(response);
+        setPendingQuery(null);
         setStatus("success");
         return response;
       } catch (err: unknown) {
@@ -134,10 +142,12 @@ export function useHeatwaveAnalysis() {
               });
 
         if (apiErr.isCancelled) {
+          setPendingQuery(null);
           return null;
         }
 
         setError(apiErr);
+        setPendingQuery(null);
         setStatus("error");
         return null;
       }
@@ -151,12 +161,14 @@ export function useHeatwaveAnalysis() {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
+    setPendingQuery(null);
     setStatus("idle");
   }, []);
 
   const clear = useCallback(() => {
     cancel();
     setData(null);
+    setLastSuccessfulData(null);
     setError(null);
     setStatus("idle");
   }, [cancel]);
@@ -164,6 +176,8 @@ export function useHeatwaveAnalysis() {
   return {
     status,
     data,
+    lastSuccessfulData,
+    pendingQuery,
     isLoading: status === "loading",
     isSuccess: status === "success",
     isError: status === "error",

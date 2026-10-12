@@ -12,10 +12,11 @@ import {
   Tooltip,
   Legend,
   CartesianGrid,
+  Cell,
 } from "recharts";
 import { AnnualHeatwaveMetricDTO, TrendStatisticsDTO, QualityStatus } from "@/types/api";
 import { formatNumber, formatSlope, getQualityStatusBadge } from "@/lib/utils";
-import { Flame, Thermometer, Info } from "lucide-react";
+import { Flame, Thermometer, Info, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 
 interface CustomThermalTooltipProps {
   active?: boolean;
@@ -28,6 +29,7 @@ interface CustomThermalTooltipProps {
       eventCount: number;
       qualityStatus: QualityStatus;
       isProvisional: boolean;
+      isExcludedFromTrend: boolean;
     };
   }>;
   label?: string | number;
@@ -84,11 +86,31 @@ const CustomThermalTooltip: React.FC<CustomThermalTooltipProps> = ({ active, pay
         </p>
       )}
 
-      {item.isProvisional && (
-        <div className="text-[10px] text-amber-300 bg-amber-500/10 p-1.5 rounded border border-amber-500/20">
-          Provisional ongoing year.
-        </div>
-      )}
+      {/* Scientific Regression Status Notice */}
+      <div
+        className={`p-1.5 rounded text-[10px] flex items-center gap-1.5 border ${
+          item.isExcludedFromTrend
+            ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+            : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+        }`}
+      >
+        {item.isProvisional ? (
+          <>
+            <Clock className="w-3 h-3 text-amber-400 shrink-0" />
+            <span>Excluded from trend regression (ongoing year)</span>
+          </>
+        ) : item.isExcludedFromTrend ? (
+          <>
+            <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+            <span>Excluded from trend regression (insufficient observations)</span>
+          </>
+        ) : (
+          <>
+            <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+            <span>Included in OLS decadal trend regression</span>
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -122,12 +144,24 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
     eventCount: m.event_count,
     qualityStatus: m.quality_status,
     isProvisional: m.quality_status === "provisional",
+    isExcludedFromTrend: m.quality_status !== "reliable",
   }));
 
   const hasTrend = intensityTrend && intensityTrend.slope_per_decade !== null;
+  const startYear = metrics[0]?.year;
+  const endYear = metrics[metrics.length - 1]?.year;
 
   return (
     <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md space-y-4">
+      {/* Screen Reader Summary */}
+      <div className="sr-only" aria-live="polite">
+        Annual heatwave intensity chart for years {startYear} through {endYear}.
+        Presents daily excess temperatures above threshold in degrees Celsius and annual cumulative degree-days.
+        {hasTrend
+          ? `Cumulative heat burden trend slope is ${formatSlope(intensityTrend!.slope_per_decade, 1)} ${intensityTrend!.unit}.`
+          : "Insufficient reliable data to evaluate cumulative intensity trend."}
+      </div>
+
       {/* Header & View Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -271,6 +305,19 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
+                  <defs>
+                    <pattern
+                      id="provisionalIntensityStripes"
+                      width="6"
+                      height="6"
+                      patternTransform="rotate(45 0 0)"
+                      patternUnits="userSpaceOnUse"
+                    >
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="#f97316" strokeWidth="3" />
+                      <line x1="0" y1="0" x2="6" y2="0" stroke="#78350f" strokeWidth="1" />
+                    </pattern>
+                  </defs>
+
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis
                     dataKey="year"
@@ -297,10 +344,23 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
                   <Bar
                     dataKey="cumulativeDegreeDays"
                     name="Cumulative Heat Burden (°C-days)"
-                    fill="#f97316"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={32}
-                  />
+                  >
+                    {chartData.map((entry, index) => {
+                      if (entry.isProvisional) {
+                        return (
+                          <Cell
+                            key={`cell-int-${index}`}
+                            fill="url(#provisionalIntensityStripes)"
+                            stroke="#f97316"
+                            strokeWidth={1}
+                          />
+                        );
+                      }
+                      return <Cell key={`cell-int-${index}`} fill="#f97316" />;
+                    })}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -332,7 +392,7 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
         )}
 
         <div className="text-[11px] text-zinc-500 font-mono">
-          Sample: {intensityTrend?.sample_size_years ?? metrics.length} reliable years
+          Regression Sample: {intensityTrend?.sample_size_years ?? metrics.length} reliable years
         </div>
       </div>
     </div>

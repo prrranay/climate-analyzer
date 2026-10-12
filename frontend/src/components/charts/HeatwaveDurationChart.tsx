@@ -11,10 +11,11 @@ import {
   Tooltip,
   Legend,
   CartesianGrid,
+  Cell,
 } from "recharts";
 import { AnnualHeatwaveMetricDTO, TrendStatisticsDTO, QualityStatus } from "@/types/api";
 import { formatNumber, formatSlope, getQualityStatusBadge } from "@/lib/utils";
-import { Clock, Info } from "lucide-react";
+import { Clock, Info, CheckCircle2, AlertTriangle } from "lucide-react";
 
 interface CustomDurationTooltipProps {
   active?: boolean;
@@ -26,6 +27,8 @@ interface CustomDurationTooltipProps {
       maxDuration: number | null;
       eventCount: number;
       qualityStatus: QualityStatus;
+      isProvisional: boolean;
+      isExcludedFromTrend: boolean;
     };
   }>;
   label?: string | number;
@@ -37,7 +40,7 @@ const CustomDurationTooltip: React.FC<CustomDurationTooltipProps> = ({ active, p
   const badge = getQualityStatusBadge(item.qualityStatus);
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700/80 p-3.5 rounded-xl shadow-2xl text-xs space-y-2 backdrop-blur-md max-w-xs">
+    <div className="bg-zinc-900 border border-zinc-700/80 p-3.5 rounded-xl shadow-2xl text-xs space-y-2.5 backdrop-blur-md max-w-xs">
       <div className="flex items-center justify-between gap-3 border-b border-zinc-800 pb-1.5">
         <span className="font-bold text-zinc-100 font-mono text-sm">Year {label}</span>
         <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${badge.className}`}>
@@ -76,6 +79,32 @@ const CustomDurationTooltip: React.FC<CustomDurationTooltipProps> = ({ active, p
             Zero heatwave days recorded in this year.
           </div>
         )}
+
+        {/* Scientific Regression Status Notice */}
+        <div
+          className={`p-1.5 rounded text-[10px] flex items-center gap-1.5 border ${
+            item.isExcludedFromTrend
+              ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              : "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+          }`}
+        >
+          {item.isProvisional ? (
+            <>
+              <Clock className="w-3 h-3 text-amber-400 shrink-0" />
+              <span>Excluded from trend regression (ongoing year)</span>
+            </>
+          ) : item.isExcludedFromTrend ? (
+            <>
+              <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+              <span>Excluded from trend regression (insufficient data)</span>
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span>Included in OLS decadal trend regression</span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -107,12 +136,26 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
     maxDuration: m.max_duration_days,
     eventCount: m.event_count,
     qualityStatus: m.quality_status,
+    isProvisional: m.quality_status === "provisional",
+    isExcludedFromTrend: m.quality_status !== "reliable",
   }));
 
   const hasTrend = durationTrend && durationTrend.slope_per_decade !== null;
+  const startYear = metrics[0]?.year;
+  const endYear = metrics[metrics.length - 1]?.year;
+  const totalDays = metrics.reduce((acc, m) => acc + m.total_heatwave_days, 0);
 
   return (
     <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md space-y-4">
+      {/* Screen Reader Summary */}
+      <div className="sr-only" aria-live="polite">
+        Annual heatwave duration chart from year {startYear} to {endYear}.
+        Total cumulative heatwave days across period: {totalDays} days.
+        {hasTrend
+          ? `Decadal duration trend slope is ${formatSlope(durationTrend!.slope_per_decade, 1)} ${durationTrend!.unit}.`
+          : "Insufficient reliable data to evaluate duration trend."}
+      </div>
+
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
@@ -142,6 +185,19 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+            <defs>
+              <pattern
+                id="provisionalDurationStripes"
+                width="6"
+                height="6"
+                patternTransform="rotate(45 0 0)"
+                patternUnits="userSpaceOnUse"
+              >
+                <line x1="0" y1="0" x2="0" y2="6" stroke="#fbbf24" strokeWidth="3" />
+                <line x1="0" y1="0" x2="6" y2="0" stroke="#78350f" strokeWidth="1" />
+              </pattern>
+            </defs>
+
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="year"
@@ -174,10 +230,23 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
             <Bar
               dataKey="totalDays"
               name="Total Heatwave Days"
-              fill="#fbbf24"
               radius={[4, 4, 0, 0]}
               maxBarSize={32}
-            />
+            >
+              {chartData.map((entry, index) => {
+                if (entry.isProvisional) {
+                  return (
+                    <Cell
+                      key={`cell-dur-${index}`}
+                      fill="url(#provisionalDurationStripes)"
+                      stroke="#fbbf24"
+                      strokeWidth={1}
+                    />
+                  );
+                }
+                return <Cell key={`cell-dur-${index}`} fill="#fbbf24" />;
+              })}
+            </Bar>
 
             {showMeanDuration && (
               <Line
@@ -205,15 +274,21 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
             {durationTrend!.is_significant ? (
               <span className="text-rose-400 font-semibold">(p &lt; 0.05 statistically significant)</span>
             ) : (
-              <span className="text-zinc-400">(statistically non-significant, p = {formatNumber(durationTrend!.p_value, 3)})</span>
+              <span className="text-zinc-400">
+                (statistically non-significant, p = {formatNumber(durationTrend!.p_value, 3)})
+              </span>
             )}
           </div>
         ) : (
           <div className="text-zinc-400 italic flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-zinc-500" />
+            <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
             <span>Insufficient data to compute duration trend.</span>
           </div>
         )}
+
+        <div className="text-[11px] text-zinc-500 font-mono">
+          Regression Sample: {durationTrend?.sample_size_years ?? metrics.length} reliable years
+        </div>
       </div>
     </div>
   );

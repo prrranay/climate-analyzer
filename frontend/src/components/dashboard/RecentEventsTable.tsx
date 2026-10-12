@@ -12,8 +12,14 @@ export const RecentEventsTable: React.FC<RecentEventsTableProps> = ({ events }) 
 
   if (!events || events.length === 0) {
     return (
-      <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 text-center text-xs text-zinc-400">
-        No heatwave events recorded in the specified period.
+      <div className="p-6 rounded-2xl bg-zinc-900/70 border border-zinc-800 text-center space-y-2">
+        <div className="w-10 h-10 rounded-xl bg-zinc-800 text-zinc-400 flex items-center justify-center mx-auto">
+          <Calendar className="w-5 h-5 text-zinc-500" />
+        </div>
+        <h4 className="text-sm font-semibold text-zinc-200">No Qualifying Heatwave Events Detected</h4>
+        <p className="text-xs text-zinc-400 max-w-md mx-auto">
+          Zero periods met the criteria (≥3 consecutive days exceeding the calendar-day percentile threshold) during the requested observation window.
+        </p>
       </div>
     );
   }

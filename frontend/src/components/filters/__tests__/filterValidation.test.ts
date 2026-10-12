@@ -147,17 +147,28 @@ describe("Filter Validation & Boundary Rules", () => {
       expect(result.error).toContain("min_lat must be strictly less than max_lat");
     });
 
-    it("rejects bounding boxes exceeding 25 sq degrees area", () => {
+    it("accepts a bounding box at exactly the 25.0 sq degrees threshold", () => {
       const bbox: BoundingBoxValues = {
-        min_lat: 10.0,
-        max_lat: 20.0, // 10 deg lat span
-        min_lon: 70.0,
-        max_lon: 75.0, // 5 deg lon span -> area = 50 sq deg
+        min_lat: 30.0,
+        max_lat: 35.0, // 5.0 deg
+        min_lon: 10.0,
+        max_lon: 15.0, // 5.0 deg -> 25.0 sq deg exactly
+      };
+      const result = validateBoundingBox(bbox);
+      expect(result.valid).toBe(true);
+      expect(result.area).toBe(25);
+    });
+
+    it("rejects bounding boxes that slightly exceed 25.0 sq degrees threshold", () => {
+      const bbox: BoundingBoxValues = {
+        min_lat: 30.0,
+        max_lat: 35.01, // 5.01 deg
+        min_lon: 10.0,
+        max_lon: 15.0, // 5.0 deg -> 25.05 sq deg
       };
       const result = validateBoundingBox(bbox);
       expect(result.valid).toBe(false);
-      expect(result.area).toBe(50);
-      expect(result.error).toContain("exceeds maximum allowed limit of 25");
+      expect(result.area).toBeGreaterThan(25);
     });
   });
 
