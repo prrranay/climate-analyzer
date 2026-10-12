@@ -12,9 +12,9 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const variantStyles = {
-    default: "bg-zinc-900 border border-zinc-800",
-    glass: "bg-zinc-900/70 backdrop-blur-md border border-zinc-800/80 shadow-xl",
-    bordered: "bg-zinc-950 border border-zinc-700/60",
+    default: "bg-[#0F172A] border border-[#334155]",
+    glass: "bg-[#0F172A] backdrop-blur-md border border-[#334155] shadow-sm",
+    bordered: "bg-[#090D16] border border-[#334155]",
   }[variant];
 
   return (
@@ -33,7 +33,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
 }) => {
   return (
-    <div className={cn("px-6 py-4 border-b border-zinc-800/60", className)} {...props}>
+    <div className={cn("px-5 py-3.5 border-b border-[#334155]", className)} {...props}>
       {children}
     </div>
   );
@@ -46,7 +46,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
 }) => {
   return (
     <h3
-      className={cn("text-base font-semibold text-zinc-100 flex items-center gap-2", className)}
+      className={cn("text-sm font-semibold text-[#F8FAFC] flex items-center gap-2", className)}
       {...props}
     >
       {children}
@@ -60,7 +60,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
   ...props
 }) => {
   return (
-    <p className={cn("text-xs text-zinc-400 mt-1", className)} {...props}>
+    <p className={cn("text-xs text-[#94A3B8] mt-0.5", className)} {...props}>
       {children}
     </p>
   );
@@ -72,7 +72,7 @@ export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
 }) => {
   return (
-    <div className={cn("p-6", className)} {...props}>
+    <div className={cn("p-5", className)} {...props}>
       {children}
     </div>
   );

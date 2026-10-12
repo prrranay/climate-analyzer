@@ -139,7 +139,7 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
   const totalEvents = metrics.reduce((acc, m) => acc + m.event_count, 0);
 
   return (
-    <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md space-y-4">
+    <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] space-y-3.5 shadow-sm">
       {/* Screen Reader Summary */}
       <div className="sr-only" aria-live="polite">
         Annual heatwave frequency chart for years {startYear} through {endYear}.

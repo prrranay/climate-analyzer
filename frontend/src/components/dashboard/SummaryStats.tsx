@@ -42,22 +42,22 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
     : `${resolvedTargetName || "Custom Point"}${data.location.country && (!resolvedTargetName || !resolvedTargetName.includes(data.location.country)) ? `, ${data.location.country}` : ""}`;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Scope Header Card: Region & Analysis Period */}
-      <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-3.5 rounded-xl bg-[#0F172A] border border-[#334155] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div className="flex items-center gap-2.5">
-          <MapPin className="w-4 h-4 text-orange-400 shrink-0" />
+          <MapPin className="w-4 h-4 text-[#F97316] shrink-0" />
           <div>
-            <div className="text-xs uppercase font-semibold text-zinc-400 tracking-wider">
-              Analyzed Geographic Target
+            <div className="text-[10px] uppercase font-semibold text-[#64748B] tracking-wider">
+              ANALYZED GEOGRAPHIC TARGET
             </div>
-            <div className="text-sm font-bold text-zinc-100">{regionLabel}</div>
+            <div className="text-sm font-semibold text-[#F8FAFC]">{regionLabel}</div>
           </div>
         </div>
 
         <div className="flex items-center gap-4 text-xs font-mono">
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <Calendar className="w-3.5 h-3.5 text-orange-400" />
+          <div className="flex items-center gap-1.5 text-[#94A3B8]">
+            <Calendar className="w-3.5 h-3.5 text-[#F97316]" />
             <span>
               Period: {analysis_window.start_year}–{analysis_window.end_year} ({analysis_window.total_years} years)
             </span>
@@ -66,59 +66,65 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
       </div>
 
       {/* KPI Tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Events */}
-        <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md relative overflow-hidden group">
-          <div className="flex items-center justify-between text-zinc-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Total Heatwaves</span>
-            <Flame className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
+        <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
+          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+              Total Heatwaves
+            </span>
+            <Flame className="w-4 h-4 text-[#F97316] group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-zinc-100 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono">
             {totalEvents}
           </div>
-          <div className="text-xs text-zinc-400 mt-1">
+          <div className="text-xs text-[#94A3B8] mt-1">
             <span>{totalEvents === 0 ? "No qualifying events" : "Qualifying heatwave events"}</span>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-orange-500/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-[#F97316]/5 rounded-full blur-xl pointer-events-none" />
         </div>
 
         {/* Total Heatwave Days & Average Duration */}
-        <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md relative overflow-hidden group">
-          <div className="flex items-center justify-between text-zinc-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Extreme Heat Days</span>
-            <Clock className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+        <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
+          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+              Extreme Heat Days
+            </span>
+            <Clock className="w-4 h-4 text-[#FB923C] group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-zinc-100 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono">
             {totalHeatwaveDays}
-            <span className="text-xs font-normal text-zinc-400 ml-1">days</span>
+            <span className="text-xs font-normal text-[#64748B] ml-1">days</span>
           </div>
-          <div className="text-xs text-zinc-400 mt-1">
+          <div className="text-xs text-[#94A3B8] mt-1">
             <span>
               Avg duration:{" "}
-              <strong className="text-zinc-200 font-mono">
+              <strong className="text-[#F8FAFC] font-mono">
                 {avgEventDuration !== null ? `${formatNumber(avgEventDuration, 1)} d/event` : "N/A"}
               </strong>
             </span>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-[#FB923C]/5 rounded-full blur-xl pointer-events-none" />
         </div>
 
         {/* Heatwave Trend & Units */}
-        <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md relative overflow-hidden group">
-          <div className="flex items-center justify-between text-zinc-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Frequency Trend</span>
+        <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
+          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+              Frequency Trend
+            </span>
             <TrendingUp className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-zinc-100 font-mono flex items-baseline gap-1">
+          <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono flex items-baseline gap-1">
             {freqTrend?.slope_per_decade !== null && freqTrend?.slope_per_decade !== undefined ? (
               <>
                 <span>{formatSlope(freqTrend.slope_per_decade, 2)}</span>
-                <span className="text-xs font-sans font-normal text-zinc-400">
+                <span className="text-xs font-sans font-normal text-[#64748B]">
                   {freqTrend.unit || "events/dec"}
                 </span>
               </>
             ) : (
-              <span className="text-base text-zinc-400">N/A (Insufficient Data)</span>
+              <span className="text-base text-[#64748B]">N/A (Insufficient Data)</span>
             )}
           </div>
           <div className="text-xs mt-1">
@@ -129,29 +135,31 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
                 {freqBadge.label}
               </span>
             ) : (
-              <span className="text-zinc-500 text-[10px]">OLS Regression</span>
+              <span className="text-[#64748B] text-[10px]">OLS Regression</span>
             )}
           </div>
-          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
         </div>
 
-        {/* Peak Temperature Exceedance (Accurately reflects peak_intensity_celsius) */}
-        <div className="p-5 rounded-2xl bg-zinc-900/70 border border-zinc-800 backdrop-blur-md relative overflow-hidden group">
-          <div className="flex items-center justify-between text-zinc-400 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Peak Temp Exceedance</span>
+        {/* Peak Temperature Exceedance */}
+        <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
+          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+              Peak Exceedance
+            </span>
             <Thermometer className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-2xl sm:text-3xl font-bold text-zinc-100 font-mono">
+          <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono">
             {peakExceedance !== null ? `+${formatNumber(peakExceedance, 1)}°C` : "N/A"}
           </div>
-          <div className="text-xs text-zinc-400 mt-1 flex items-center justify-between gap-1">
-            <span className="text-[11px] text-zinc-500">Above moving threshold</span>
-            <div className="flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+          <div className="text-xs text-[#94A3B8] mt-1 flex items-center justify-between gap-1">
+            <span className="text-[10px] text-[#64748B]">Above threshold</span>
+            <div className="flex items-center gap-1 font-mono text-[10px] text-[#10B981]">
+              <ShieldCheck className="w-3 h-3 text-[#10B981]" />
               <span>{formatPercent(data_quality.completeness_percentage)}</span>
             </div>
           </div>
-          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
         </div>
       </div>
     </div>

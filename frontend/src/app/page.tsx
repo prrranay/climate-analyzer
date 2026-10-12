@@ -36,7 +36,7 @@ import {
   DEFAULT_MODEL,
   PRESET_REGIONS,
 } from "@/lib/constants";
-import { AlertTriangle, Info, MapPin } from "lucide-react";
+import { AlertTriangle, Info, MapPin, Compass } from "lucide-react";
 
 interface QuerySnapshot {
   mode: GeographicMode;
@@ -183,6 +183,44 @@ export default function Home() {
     }
   };
 
+  const handleLoadExample = async () => {
+    if (isLoading) return;
+    const preset = PRESET_REGIONS[0];
+    setGeographicMode("search");
+    setSelectedLocation(preset);
+
+    const snapshot: QuerySnapshot = {
+      mode: "search",
+      targetName: preset.label,
+      coordsLabel: `${preset.latitude.toFixed(4)}°, ${preset.longitude.toFixed(4)}°`,
+      latitude: preset.latitude,
+      longitude: preset.longitude,
+      startYear: formState.startYear,
+      endYear: formState.endYear,
+      baselineStart: formState.baselineStartYear,
+      baselineEnd: formState.baselineEndYear,
+      percentile: formState.thresholdPercentile,
+      minDays: formState.minConsecutiveDays,
+      model: formState.model,
+    };
+
+    const res = await runPointAnalysis({
+      latitude: preset.latitude,
+      longitude: preset.longitude,
+      start_year: formState.startYear,
+      end_year: formState.endYear,
+      baseline_start_year: formState.baselineStartYear,
+      baseline_end_year: formState.baselineEndYear,
+      threshold_percentile: formState.thresholdPercentile,
+      min_consecutive_days: formState.minConsecutiveDays,
+      model: formState.model,
+    });
+
+    if (res) {
+      setActiveQuerySnapshot(snapshot);
+    }
+  };
+
   const isBboxValid =
     bboxValues.min_lat >= -90 &&
     bboxValues.max_lat <= 90 &&
@@ -241,13 +279,49 @@ export default function Home() {
       : selectedLocation?.name || `${selectedLocation?.latitude.toFixed(2)}°, ${selectedLocation?.longitude.toFixed(2)}°`;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-orange-500/30 selection:text-orange-200">
+    <div className="min-h-screen bg-[#090D16] text-[#F8FAFC] flex flex-col font-sans selection:bg-[#F97316]/30 selection:text-[#FB923C] relative overflow-x-hidden">
+      {/* Spatial Grid Watermark Background Overlay */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#F97316_1px,transparent_1px)] [background-size:24px_24px] z-0" />
+
+      {/* Global Navigation Shelf */}
       <Header />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Filter and Parameter Controls */}
-          <aside className="lg:col-span-4 lg:sticky lg:top-24 space-y-6 bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800/80 backdrop-blur-md shadow-xl">
+      {/* Main Workspace Canvas */}
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 relative z-10 flex flex-col">
+        {/* Workspace Top Subheader Banner Shelf */}
+        <div className="mb-4 pb-3 border-b border-[#1E293B] flex items-center justify-between text-xs font-mono text-[#94A3B8]">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">
+              ANALYTICAL CANVAS
+            </span>
+            <span className="text-[#334155]">/</span>
+            <span className="text-[#94A3B8]">Climatological Reanalysis View</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-3 text-[11px] text-[#64748B]">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+              Grid Resolution: 28km (0.25°)
+            </span>
+            <span className="text-[#334155]">•</span>
+            <span>Baseline: 1991–2020 ERA5 Climatology</span>
+          </div>
+        </div>
+
+        {/* Dual Column Analytical Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start flex-1">
+          {/* Left Column: Filter and Parameter Controls Rail */}
+          <aside className="lg:col-span-4 w-full bg-[#090D16] border border-[#334155] rounded-xl p-4 lg:sticky lg:top-16 shadow-lg space-y-4">
+            {/* Top Meta Header inside Sidebar */}
+            <div className="pb-2 border-b border-[#1E293B] flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">
+                <Compass className="w-3.5 h-3.5 text-[#F97316]" />
+                <span>LOCATION &amp; PARAMETERS</span>
+              </div>
+              <span className="text-[10px] font-mono text-[#FB923C] bg-[#F97316]/10 px-1.5 py-0.5 rounded border border-[#F97316]/20">
+                0.25° Spatial Grid
+              </span>
+            </div>
+
             {geographicMode === "search" && (
               <RegionSearch
                 selectedLocation={selectedLocation}
@@ -285,34 +359,35 @@ export default function Home() {
             />
           </aside>
 
-          {/* Right Column: Dashboard Visualizations & Insights */}
-          <section className="lg:col-span-8 space-y-6">
-            {/* Error Message with Recovery Action */}
+          {/* Right Column: Dashboard Visualizations & Insights Canvas */}
+          <section className="lg:col-span-8 space-y-4 min-w-0">
+            {/* Error Alert with Retry Action */}
             {error && (
               <ErrorAlert
                 error={error}
                 onRetry={handleRunAnalysis}
-                className="shadow-lg"
+                className="shadow-sm"
               />
             )}
 
             {/* In-Flight Analysis Loading Indicator */}
             {isLoading && (
-              <div className="p-12 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 backdrop-blur-md flex flex-col items-center justify-center space-y-4 shadow-xl">
+              <div className="p-8 sm:p-12 rounded-xl bg-[#0F172A] border border-[#334155] flex flex-col items-center justify-center space-y-3.5 shadow-xl relative overflow-hidden">
+                <div className="absolute w-72 h-72 bg-[#F97316]/10 rounded-full blur-3xl pointer-events-none -top-10" />
                 <LoadingSpinner
                   size="lg"
                   label={`Analyzing ${pendingTargetName} (${formState.startYear}–${formState.endYear})...`}
                 />
-                <div className="text-xs text-zinc-400 font-mono bg-zinc-950/70 p-2.5 rounded-lg border border-zinc-800/80 text-center max-w-md">
+                <div className="text-xs text-[#94A3B8] font-mono bg-[#090D16] p-2.5 rounded border border-[#1E293B] text-center max-w-md">
                   Source: {formState.model} • Baseline: {formState.baselineStartYear}–{formState.baselineEndYear} • Threshold: {formState.thresholdPercentile}th %ile • Min: {formState.minConsecutiveDays}d
                 </div>
-                <p className="text-xs text-zinc-500 max-w-sm text-center">
+                <p className="text-xs text-[#64748B] max-w-sm text-center">
                   Computing calendar-day moving-window percentiles, extracting multi-day extreme anomalies, and executing OLS linear regressions.
                 </p>
                 <button
                   type="button"
                   onClick={cancel}
-                  className="text-xs text-rose-400 hover:text-rose-300 underline cursor-pointer mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded px-1"
+                  className="text-xs text-rose-400 hover:text-rose-300 underline cursor-pointer mt-1"
                 >
                   Cancel Analysis Request
                 </button>
@@ -321,12 +396,12 @@ export default function Home() {
 
             {/* Preserved Previous Result Notice when request fails */}
             {!isLoading && error && lastSuccessfulData && (
-              <div className="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-700/80 text-xs text-zinc-300 flex items-center justify-between gap-3 shadow-sm">
+              <div className="p-3 rounded-lg bg-[#0F172A] border border-[#334155] text-xs text-[#94A3B8] flex items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-orange-400 shrink-0" />
+                  <Info className="w-4 h-4 text-[#FB923C] shrink-0" />
                   <span>
                     Preserving last successful analysis for{" "}
-                    <strong className="text-zinc-100">
+                    <strong className="text-[#F8FAFC]">
                       {activeQuerySnapshot?.targetName ||
                         ("location" in lastSuccessfulData
                           ? lastSuccessfulData.location.name || "Custom Coordinate"
@@ -340,14 +415,14 @@ export default function Home() {
 
             {/* Parameters Modified Warning Banner */}
             {!isLoading && isFiltersModified && activeQuerySnapshot && (
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-fadeIn">
+              <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-start gap-2.5">
                   <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <div className="text-xs">
                     <span className="font-semibold text-amber-300">Parameters modified:</span>
-                    <p className="text-zinc-300 mt-0.5">
+                    <p className="text-[#94A3B8] mt-0.5">
                       Displaying analysis for{" "}
-                      <strong className="text-zinc-100">
+                      <strong className="text-[#F8FAFC]">
                         {activeQuerySnapshot.targetName} ({activeQuerySnapshot.startYear}–{activeQuerySnapshot.endYear})
                       </strong>.
                       Click <em>Run Heatwave Analysis</em> to evaluate your new selection.
@@ -358,7 +433,7 @@ export default function Home() {
                   type="button"
                   onClick={handleRunAnalysis}
                   disabled={isLoading || !canSubmit}
-                  className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-medium text-xs transition-colors shrink-0 cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-orange-500"
+                  className="px-3 py-1.5 rounded bg-[#F97316] hover:bg-[#EA580C] disabled:opacity-50 text-white font-medium text-xs transition-colors shrink-0 cursor-pointer shadow-xs"
                 >
                   Update Analysis
                 </button>
@@ -367,37 +442,37 @@ export default function Home() {
 
             {/* Analysis Results Display */}
             {!isLoading && displayedData && (
-              <div className="space-y-6 animate-fadeIn">
-                {/* Header Banner - Always associated explicitly with analyzed dataset */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800">
+              <div className="space-y-4">
+                {/* Header Banner - Associated explicitly with analyzed dataset */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#0F172A] border border-[#334155] shadow-sm">
                   <div>
-                    <span className="text-[11px] uppercase tracking-wider font-semibold text-orange-400 flex items-center gap-1.5">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-[#F97316] flex items-center gap-1.5 font-mono">
                       <MapPin className="w-3.5 h-3.5" />
                       Active Climatology Results
                     </span>
-                    <h2 className="text-xl font-bold text-zinc-100 break-words">
+                    <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC] break-words">
                       {"location" in displayedData
                         ? (activeQuerySnapshot?.targetName || displayedData.location.name || "Custom Coordinate")
                         : (activeQuerySnapshot?.targetName || "Regional Bounding Box")}
                       {"location" in displayedData && displayedData.location.country && (
-                        <span className="text-zinc-400 font-normal text-sm ml-2">
+                        <span className="text-[#94A3B8] font-normal text-xs ml-2">
                           ({displayedData.location.admin1 ? `${displayedData.location.admin1}, ` : ""}
                           {displayedData.location.country})
                         </span>
                       )}
                     </h2>
-                    <p className="text-xs text-zinc-400 font-mono mt-0.5">
+                    <p className="text-xs text-[#64748B] font-mono mt-0.5">
                       {"location" in displayedData
-                        ? `${displayedData.location.latitude.toFixed(4)}°, ${displayedData.location.longitude.toFixed(4)}° • Analysis Window: ${displayedData.analysis_window.start_year}–${displayedData.analysis_window.end_year}`
-                        : `${displayedData.bounding_box.min_latitude.toFixed(2)}° to ${displayedData.bounding_box.max_latitude.toFixed(2)}° lat • Analysis Window: ${displayedData.analysis_window.start_year}–${displayedData.analysis_window.end_year}`}
+                        ? `${displayedData.location.latitude.toFixed(4)}°, ${displayedData.location.longitude.toFixed(4)}° • Window: ${displayedData.analysis_window.start_year}–${displayedData.analysis_window.end_year}`
+                        : `${displayedData.bounding_box.min_latitude.toFixed(2)}° to ${displayedData.bounding_box.max_latitude.toFixed(2)}° lat • Window: ${displayedData.analysis_window.start_year}–${displayedData.analysis_window.end_year}`}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/20 font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded font-mono bg-[#F97316]/10 text-[#FB923C] border border-[#F97316]/30 font-medium">
                       {displayedData.baseline.percentile_threshold}th %ile threshold
                     </span>
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-mono">
+                    <span className="text-[11px] px-2 py-0.5 rounded bg-[#1E293B] text-[#94A3B8] border border-[#334155] font-mono">
                       {displayedData.data_source.dataset}
                     </span>
                     <ExportButton data={displayedData} />
@@ -447,18 +522,30 @@ export default function Home() {
 
             {/* Empty State when no analysis has run */}
             {!isLoading && !displayedData && !error && (
-              <EmptyState
-                onSelectPreset={() => {
-                  setGeographicMode("search");
-                  setSelectedLocation(PRESET_REGIONS[0]);
-                  handleRunAnalysis();
-                }}
-              />
+              <EmptyState onSelectPreset={handleLoadExample} />
             )}
           </section>
         </div>
+
+        {/* Live Pipeline Processing Telemetry Ribbon (Bottom Shelf) */}
+        <div className="mt-8 pt-3 border-t border-[#1E293B] flex items-center justify-between text-[11px] font-mono text-[#64748B]">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
+              <span>API Gateway: FastAPI Cluster</span>
+            </span>
+            <span className="text-[#334155]">•</span>
+            <span>Query Cache: Redis In-Memory</span>
+            <span className="text-[#334155]">•</span>
+            <span>Storage: MongoDB Climatology Grid</span>
+          </div>
+          <div className="hidden sm:flex items-center gap-2">
+            <span>Response Time: &lt;50ms</span>
+          </div>
+        </div>
       </main>
 
+      {/* Global Telemetry Footer Shelf */}
       <Footer />
     </div>
   );

@@ -3,7 +3,6 @@
 import React, { useState, useId } from "react";
 import {
   Flame,
-  Sliders,
   Play,
   RotateCcw,
   ChevronDown,
@@ -12,6 +11,9 @@ import {
   Calendar,
   Square,
   AlertTriangle,
+  Sliders,
+  Snowflake,
+  Droplets,
 } from "lucide-react";
 import {
   MIN_ANALYSIS_YEAR,
@@ -71,21 +73,21 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
   const isPeriodValid = isSpanValid && isYearOrderValid && isMinYearValid && isMaxYearValid;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* 1. Geographic Selection Mode Toggle */}
       <div>
-        <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
-          Geographic Selection Method
+        <label className="block text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-1.5">
+          GEOGRAPHIC SELECTION METHOD
         </label>
-        <div className="grid grid-cols-3 gap-1.5 p-1 bg-zinc-900 rounded-xl border border-zinc-800 text-xs">
+        <div className="grid grid-cols-3 gap-1 p-1 bg-[#090D16] border border-[#334155] rounded text-xs">
           <button
             type="button"
             onClick={() => onGeographicModeChange("search")}
             disabled={isLoading}
-            className={`py-2 px-2 text-center font-medium rounded-lg transition-all cursor-pointer ${
+            className={`py-1.5 px-2 text-center font-medium rounded transition-all cursor-pointer ${
               geographicMode === "search"
-                ? "bg-zinc-800 text-orange-400 shadow-sm border border-zinc-700/80"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-inner"
+                : "text-[#94A3B8] hover:text-[#F8FAFC]"
             }`}
           >
             City Search
@@ -94,10 +96,10 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onGeographicModeChange("coordinates")}
             disabled={isLoading}
-            className={`py-2 px-2 text-center font-medium rounded-lg transition-all cursor-pointer ${
+            className={`py-1.5 px-2 text-center font-medium rounded transition-all cursor-pointer ${
               geographicMode === "coordinates"
-                ? "bg-zinc-800 text-orange-400 shadow-sm border border-zinc-700/80"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-inner"
+                : "text-[#94A3B8] hover:text-[#F8FAFC]"
             }`}
           >
             Direct Lat/Lon
@@ -106,10 +108,10 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onGeographicModeChange("bbox")}
             disabled={isLoading}
-            className={`py-2 px-2 text-center font-medium rounded-lg transition-all cursor-pointer ${
+            className={`py-1.5 px-2 text-center font-medium rounded transition-all cursor-pointer ${
               geographicMode === "bbox"
-                ? "bg-zinc-800 text-orange-400 shadow-sm border border-zinc-700/80"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-inner"
+                : "text-[#94A3B8] hover:text-[#F8FAFC]"
             }`}
           >
             Bounding Box
@@ -118,66 +120,89 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
       </div>
 
       {/* 2. Hazard Scope (Explicitly Heatwave Only) */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-            Hazard Selection
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">
+            HAZARD SELECTION
           </label>
-          <span className="text-[11px] text-orange-400/90 font-medium">
+          <span className="text-[10px] font-mono text-[#FB923C] font-medium">
             Release v1.0 Scope
           </span>
         </div>
 
         <div className="grid grid-cols-1 gap-2">
-          {HAZARDS.map((h) => (
-            <div
-              key={h.id}
-              className={`p-3 rounded-xl border transition-all flex items-center justify-between ${
-                h.active
-                  ? "bg-orange-500/10 border-orange-500/40 text-orange-300 ring-1 ring-orange-500/20"
-                  : "bg-zinc-900/30 border-zinc-800/60 text-zinc-500 opacity-60 cursor-not-allowed"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Flame className={`w-4 h-4 ${h.active ? "text-orange-400" : "text-zinc-600"}`} />
-                <div>
-                  <div className="text-xs font-bold text-zinc-100 flex items-center gap-2">
-                    {h.name}
-                    {h.active && (
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
-                        Active Climatology
-                      </span>
-                    )}
+          {HAZARDS.map((h) => {
+            const isHeat = h.id === "heatwave";
+            return (
+              <div
+                key={h.id}
+                className={`p-3 rounded transition-all ${
+                  h.active
+                    ? "bg-[#F97316]/5 border border-[#F97316]/70 shadow-[0_0_12px_-2px_rgba(249,115,22,0.15)]"
+                    : "bg-[#0F172A]/40 border border-[#1E293B] opacity-60 cursor-not-allowed"
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-6 h-6 rounded flex items-center justify-center ${
+                        h.active
+                          ? "bg-[#F97316] text-[#090D16]"
+                          : "bg-[#1E293B] text-[#64748B]"
+                      }`}
+                    >
+                      {isHeat ? (
+                        <Flame className="w-3.5 h-3.5 fill-[#090D16]" />
+                      ) : h.id === "cold_spell" ? (
+                        <Snowflake className="w-3.5 h-3.5 text-[#06B6D4]" />
+                      ) : (
+                        <Droplets className="w-3.5 h-3.5 text-amber-300" />
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-[#F8FAFC]">
+                      {h.name}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">
-                    {h.description}
-                  </div>
+                  {h.active ? (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider bg-[#F97316]/20 text-[#FB923C] border border-[#F97316]/40 font-semibold uppercase">
+                      ACTIVE CLIMATOLOGY
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#1E293B] text-[#64748B] border border-[#1E293B]">
+                      Coming soon
+                    </span>
+                  )}
                 </div>
+                <p className="mt-1.5 text-xs text-[#94A3B8] leading-snug">
+                  {h.description}
+                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* 3. Analysis Period Range Controls (Default 1991–2020) */}
-      <div className="space-y-3">
+      {/* 3. Analysis Period Range Controls */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-orange-400" />
-            Analysis Period Range
-          </label>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 text-[#F97316]" />
+            <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">
+              ANALYSIS PERIOD RANGE
+            </label>
+          </div>
           <span
-            className={`text-[11px] font-mono ${
-              isPeriodValid ? "text-zinc-400" : "text-rose-400 font-semibold"
+            className={`text-[10px] font-mono ${
+              isPeriodValid ? "text-[#94A3B8]" : "text-rose-400 font-semibold"
             }`}
           >
             {isPeriodValid ? `${spanYears} years` : "Invalid Range"} (Max: {MAX_ANALYSIS_RANGE_YEARS}y)
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label htmlFor={startYearId} className="block text-xs text-zinc-400 mb-1">
+            <label htmlFor={startYearId} className="block text-[10px] font-mono text-[#64748B] mb-1">
               Start Year (≥ {MIN_ANALYSIS_YEAR})
             </label>
             <input
@@ -190,15 +215,15 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                 onChange({ startYear: parseInt(e.target.value) || MIN_ANALYSIS_YEAR })
               }
               disabled={isLoading}
-              className={`w-full px-3 py-2 rounded-lg bg-zinc-900 border text-sm text-zinc-100 font-mono focus:outline-none transition-all ${
+              className={`w-full px-3 py-1.5 rounded bg-[#090D16] border text-xs text-[#F8FAFC] font-mono text-center outline-none transition-all ${
                 isPeriodValid
-                  ? "border-zinc-700 focus:ring-1 focus:ring-orange-500"
+                  ? "border-[#334155] focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]"
                   : "border-rose-500 text-rose-200"
               }`}
             />
           </div>
           <div>
-            <label htmlFor={endYearId} className="block text-xs text-zinc-400 mb-1">
+            <label htmlFor={endYearId} className="block text-[10px] font-mono text-[#64748B] mb-1">
               End Year (≤ {CURRENT_YEAR})
             </label>
             <input
@@ -211,9 +236,9 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                 onChange({ endYear: parseInt(e.target.value) || CURRENT_YEAR })
               }
               disabled={isLoading}
-              className={`w-full px-3 py-2 rounded-lg bg-zinc-900 border text-sm text-zinc-100 font-mono focus:outline-none transition-all ${
+              className={`w-full px-3 py-1.5 rounded bg-[#090D16] border text-xs text-[#F8FAFC] font-mono text-center outline-none transition-all ${
                 isPeriodValid
-                  ? "border-zinc-700 focus:ring-1 focus:ring-orange-500"
+                  ? "border-[#334155] focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]"
                   : "border-rose-500 text-rose-200"
               }`}
             />
@@ -222,9 +247,9 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
 
         {/* Validation Error Message */}
         {!isPeriodValid && (
-          <div className="p-2.5 rounded-lg bg-rose-950/30 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-            <span>
+          <div className="p-2 rounded bg-rose-950/30 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+            <span className="text-[11px]">
               {!isYearOrderValid
                 ? "Start year cannot exceed end year."
                 : !isMinYearValid
@@ -242,7 +267,11 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onChange({ startYear: 1991, endYear: 2020 })}
             disabled={isLoading}
-            className="text-[11px] px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer"
+            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+              formState.startYear === 1991 && formState.endYear === 2020
+                ? "bg-[#1E293B] border border-[#F97316]/40 text-[#FB923C] font-semibold"
+                : "bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]"
+            }`}
           >
             1991–2020 (WMO Standard)
           </button>
@@ -250,7 +279,11 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onChange({ startYear: 1980, endYear: 2023 })}
             disabled={isLoading}
-            className="text-[11px] px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer"
+            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+              formState.startYear === 1980 && formState.endYear === 2023
+                ? "bg-[#1E293B] border border-[#F97316]/40 text-[#FB923C] font-semibold"
+                : "bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]"
+            }`}
           >
             1980–2023 (Modern Era)
           </button>
@@ -258,48 +291,54 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onChange({ startYear: 1950, endYear: 2020 })}
             disabled={isLoading}
-            className="text-[11px] px-2 py-0.5 rounded bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer"
+            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+              formState.startYear === 1950 && formState.endYear === 2020
+                ? "bg-[#1E293B] border border-[#F97316]/40 text-[#FB923C] font-semibold"
+                : "bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]"
+            }`}
           >
             1950–2020 (70y Trend)
           </button>
         </div>
       </div>
 
-      {/* 4. Advanced Climatology Accordion */}
-      <div className="border border-zinc-800 rounded-xl overflow-hidden bg-zinc-900/40">
+      {/* 4. Advanced Detection Parameters Accordion */}
+      <div className="border border-[#334155] rounded bg-[#0F172A]/50 overflow-hidden">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full px-4 py-3 flex items-center justify-between text-xs font-medium text-zinc-300 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+          className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-[#1E293B]/40 transition-colors cursor-pointer"
         >
-          <span className="flex items-center gap-2">
-            <Sliders className="w-3.5 h-3.5 text-orange-400" />
-            Detection Parameters &amp; Reanalysis Model
-          </span>
+          <div className="flex items-center gap-2">
+            <Sliders className="w-3.5 h-3.5 text-[#F97316]" />
+            <span className="text-xs font-medium text-[#F8FAFC]">
+              Detection Parameters &amp; Model
+            </span>
+          </div>
           {showAdvanced ? (
-            <ChevronUp className="w-4 h-4 text-zinc-400" />
+            <ChevronUp className="w-3.5 h-3.5 text-[#64748B]" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-zinc-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
           )}
         </button>
 
         {showAdvanced && (
-          <div className="p-4 border-t border-zinc-800 space-y-4 bg-zinc-950/60">
-            {/* Baseline Period */}
+          <div className="p-3 border-t border-[#334155] space-y-3 bg-[#090D16]/60">
+            {/* Climatological Baseline Period */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-zinc-300 font-medium">
-                  Baseline Climatology Period
+                <label className="text-xs text-[#94A3B8]">
+                  Climatological Baseline
                 </label>
-                <span className="text-[11px] text-zinc-500 font-mono">
+                <span className="text-[10px] text-[#FB923C] font-mono">
                   {formState.baselineStartYear}–{formState.baselineEndYear}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"
-                  min={1940}
-                  max={2020}
+                  min="1940"
+                  max={formState.baselineEndYear}
                   value={formState.baselineStartYear}
                   onChange={(e) =>
                     onChange({
@@ -307,13 +346,12 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                     })
                   }
                   disabled={isLoading}
-                  className="px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 font-mono"
-                  placeholder="Baseline Start"
+                  className="px-2 py-1 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono text-center outline-none focus:border-[#F97316]"
                 />
                 <input
                   type="number"
-                  min={1950}
-                  max={CURRENT_YEAR}
+                  min={formState.baselineStartYear}
+                  max="2026"
                   value={formState.baselineEndYear}
                   onChange={(e) =>
                     onChange({
@@ -321,8 +359,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                     })
                   }
                   disabled={isLoading}
-                  className="px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 font-mono"
-                  placeholder="Baseline End"
+                  className="px-2 py-1 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono text-center outline-none focus:border-[#F97316]"
                 />
               </div>
             </div>
@@ -330,39 +367,41 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             {/* Threshold Percentile */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-zinc-300 font-medium">
-                  Percentile Threshold
+                <label className="text-xs text-[#94A3B8]">
+                  Threshold Percentile
                 </label>
-                <span className="text-xs text-orange-400 font-mono font-semibold">
-                  {formState.thresholdPercentile}%
+                <span className="text-xs text-[#FB923C] font-mono font-semibold">
+                  {formState.thresholdPercentile}th %ile
                 </span>
               </div>
               <input
                 type="range"
-                min="80.0"
-                max="99.9"
+                min="80"
+                max="99"
                 step="0.5"
                 value={formState.thresholdPercentile}
                 onChange={(e) =>
-                  onChange({ thresholdPercentile: parseFloat(e.target.value) || DEFAULT_PERCENTILE })
+                  onChange({
+                    thresholdPercentile: parseFloat(e.target.value) || DEFAULT_PERCENTILE,
+                  })
                 }
                 disabled={isLoading}
-                className="w-full accent-orange-500 cursor-pointer"
+                className="w-full accent-[#F97316] cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-zinc-500 font-mono mt-0.5">
+              <div className="flex justify-between text-[10px] text-[#64748B] font-mono mt-0.5">
                 <span>80% (Moderate)</span>
-                <span>95% (Standard Extreme)</span>
-                <span>99% (Rare Extreme)</span>
+                <span>95% (Standard)</span>
+                <span>99% (Rare)</span>
               </div>
             </div>
 
             {/* Min Consecutive Days */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-zinc-300 font-medium">
+                <label className="text-xs text-[#94A3B8]">
                   Min Consecutive Days
                 </label>
-                <span className="text-xs text-orange-400 font-mono font-semibold">
+                <span className="text-xs text-[#FB923C] font-mono font-semibold">
                   {formState.minConsecutiveDays} days
                 </span>
               </div>
@@ -378,13 +417,13 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                   })
                 }
                 disabled={isLoading}
-                className="w-full accent-orange-500 cursor-pointer"
+                className="w-full accent-[#F97316] cursor-pointer"
               />
             </div>
 
             {/* Reanalysis Model Dataset */}
             <div>
-              <label className="block text-xs text-zinc-300 font-medium mb-1">
+              <label className="block text-xs text-[#94A3B8] mb-1">
                 Reanalysis Model Source
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -392,27 +431,27 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                   type="button"
                   onClick={() => onChange({ model: "ERA5" })}
                   disabled={isLoading}
-                  className={`py-1.5 px-2.5 rounded-lg text-xs font-medium border text-left cursor-pointer ${
+                  className={`py-1.5 px-2 rounded text-xs border text-left cursor-pointer transition-colors ${
                     formState.model === "ERA5"
-                      ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                      ? "bg-[#1E293B] border-[#F97316]/50 text-[#FB923C]"
+                      : "bg-[#090D16] border-[#334155] text-[#94A3B8]"
                   }`}
                 >
                   <div className="font-semibold">ERA5</div>
-                  <div className="text-[10px] opacity-75">0.25° Global Atmosphere</div>
+                  <div className="text-[10px] text-[#64748B]">0.25° Global</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => onChange({ model: "ERA5_LAND" })}
                   disabled={isLoading}
-                  className={`py-1.5 px-2.5 rounded-lg text-xs font-medium border text-left cursor-pointer ${
+                  className={`py-1.5 px-2 rounded text-xs border text-left cursor-pointer transition-colors ${
                     formState.model === "ERA5_LAND"
-                      ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                      ? "bg-[#1E293B] border-[#F97316]/50 text-[#FB923C]"
+                      : "bg-[#090D16] border-[#334155] text-[#94A3B8]"
                   }`}
                 >
                   <div className="font-semibold">ERA5-Land</div>
-                  <div className="text-[10px] opacity-75">0.1° Enhanced Terrestrial</div>
+                  <div className="text-[10px] text-[#64748B]">0.1° Land</div>
                 </button>
               </div>
             </div>
@@ -421,22 +460,22 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
       </div>
 
       {/* 5. Execution Controls */}
-      <div className="space-y-2 pt-2">
-        <div className="flex items-center gap-3">
+      <div className="pt-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onSubmit}
             disabled={!canSubmit || isLoading || !isPeriodValid}
-            className="flex-1 inline-flex items-center justify-center gap-2 py-3 px-5 rounded-xl font-medium text-sm text-white bg-gradient-to-r from-orange-500 via-rose-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+            className="flex-1 py-2.5 px-4 rounded font-semibold text-white bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:brightness-110 active:scale-[0.985] shadow-[0_0_16px_-2px_rgba(249,115,22,0.35)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2 text-xs"
           >
             {isLoading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Analyzing Climatology...</span>
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="w-3.5 h-3.5 fill-white" />
                 <span>Run Heatwave Analysis</span>
               </>
             )}
@@ -447,9 +486,9 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
               type="button"
               onClick={onCancel}
               title="Cancel analysis request"
-              className="py-3 px-3.5 rounded-xl border border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40 text-rose-300 transition-colors cursor-pointer"
+              className="p-2.5 rounded border border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40 text-rose-300 transition-colors cursor-pointer"
             >
-              <Square className="w-4 h-4 fill-rose-300" />
+              <Square className="w-3.5 h-3.5 fill-rose-300" />
             </button>
           )}
 
@@ -458,15 +497,15 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             onClick={onReset}
             title="Reset filters to default"
             disabled={isLoading}
-            className="p-3 rounded-xl border border-zinc-800 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer disabled:opacity-50"
+            className="p-2.5 rounded bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1E293B]/80 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {!canSubmit && !isLoading && (
-          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-900/80 p-2.5 rounded-lg border border-zinc-800">
-            <Info className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+          <div className="mt-2 flex items-center gap-2 text-[11px] text-[#94A3B8] bg-[#0F172A] p-2 rounded border border-[#334155]">
+            <Info className="w-3.5 h-3.5 text-[#F97316] shrink-0" />
             <span>
               {geographicMode === "search"
                 ? "Please search for and select a target city or region."
