@@ -77,3 +77,15 @@ body {
 .leaflet-control-attribution a {
   color: #94A3B8 !important;
 }
+
+/* Ensure Leaflet vector overlays (bounding box rectangles) are prominently visible */
+.leaflet-overlay-pane {
+  z-index: 500 !important;
+}
+.leaflet-overlay-pane svg {
+  overflow: visible !important;
+}
+path.leaflet-interactive {
+  stroke-opacity: 1 !important;
+  vector-effect: non-scaling-stroke;
+}

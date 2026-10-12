@@ -30,6 +30,8 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const rectangleRef = useRef<L.Rectangle | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const previewRectRef = useRef<L.Rectangle | null>(null);
+  const cornerMarkerRef = useRef<L.CircleMarker | null>(null);
 
   const [drawMode, setDrawMode] = useState<"view" | "firstCorner" | "ready">("view");
   const [firstCorner, setFirstCorner] = useState<L.LatLng | null>(null);
@@ -66,7 +68,13 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
 
     mapInstanceRef.current = map;
 
+    // Trigger invalidateSize after container layout is ready
+    const resizeTimer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+
     return () => {
+      clearTimeout(resizeTimer);
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -92,25 +100,24 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
 
       const color = isAreaExceeded ? "#ef4444" : "#f97316";
 
+      // Always cleanly recreate rectangle with high-contrast visible styling
       if (rectangleRef.current) {
-        rectangleRef.current.setBounds(bounds);
-        rectangleRef.current.setStyle({
-          color,
-          fillColor: color,
-        });
-      } else {
-        const rect = L.rectangle(bounds, {
-          color,
-          weight: 2,
-          fillColor: color,
-          fillOpacity: 0.2,
-          dashArray: isAreaExceeded ? "4 4" : undefined,
-        }).addTo(map);
-
-        rectangleRef.current = rect;
+        rectangleRef.current.remove();
+        rectangleRef.current = null;
       }
 
-      // Fly to bounds if rectangle changed significantly
+      const rect = L.rectangle(bounds, {
+        color,
+        weight: 3,
+        fillColor: color,
+        fillOpacity: 0.35,
+        dashArray: isAreaExceeded ? "6 6" : undefined,
+      }).addTo(map);
+
+      rect.bringToFront();
+      rectangleRef.current = rect;
+
+      // Fit bounds if in view mode
       if (drawMode === "view") {
         map.fitBounds(bounds, { padding: [25, 25], maxZoom: 8, animate: true });
       }
@@ -157,6 +164,55 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
     }
   }, [mode, bboxValues, selectedLocation, isAreaExceeded, drawMode]);
 
+  // Live interactive preview while drawing custom bounding box
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (drawMode === "firstCorner" && firstCorner) {
+      if (!cornerMarkerRef.current) {
+        cornerMarkerRef.current = L.circleMarker(firstCorner, {
+          radius: 6,
+          color: "#ffffff",
+          weight: 2,
+          fillColor: "#f97316",
+          fillOpacity: 1,
+        }).addTo(map);
+      } else {
+        cornerMarkerRef.current.setLatLng(firstCorner);
+      }
+
+      const handleMouseMove = (e: L.LeafletMouseEvent) => {
+        const previewBounds = L.latLngBounds(firstCorner, e.latlng);
+        if (!previewRectRef.current) {
+          previewRectRef.current = L.rectangle(previewBounds, {
+            color: "#38bdf8",
+            weight: 2,
+            dashArray: "4 4",
+            fillColor: "#38bdf8",
+            fillOpacity: 0.25,
+          }).addTo(map);
+        } else {
+          previewRectRef.current.setBounds(previewBounds);
+        }
+      };
+
+      map.on("mousemove", handleMouseMove);
+      return () => {
+        map.off("mousemove", handleMouseMove);
+      };
+    } else {
+      if (cornerMarkerRef.current) {
+        cornerMarkerRef.current.remove();
+        cornerMarkerRef.current = null;
+      }
+      if (previewRectRef.current) {
+        previewRectRef.current.remove();
+        previewRectRef.current = null;
+      }
+    }
+  }, [drawMode, firstCorner]);
+
   // Handle map click events for drawing or recentering
   const handleMapClick = useCallback(
     (e: L.LeafletMouseEvent) => {
@@ -170,6 +226,15 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
           const maxLat = Math.max(firstCorner.lat, secondCorner.lat);
           const minLon = Math.min(firstCorner.lng, secondCorner.lng);
           const maxLon = Math.max(firstCorner.lng, secondCorner.lng);
+
+          if (cornerMarkerRef.current) {
+            cornerMarkerRef.current.remove();
+            cornerMarkerRef.current = null;
+          }
+          if (previewRectRef.current) {
+            previewRectRef.current.remove();
+            previewRectRef.current = null;
+          }
 
           // Round to 4 decimal places
           onBboxChange({
@@ -293,6 +358,14 @@ export const GeographicMapClient: React.FC<GeographicMapClientProps> = ({
               onClick={() => {
                 setDrawMode("view");
                 setFirstCorner(null);
+                if (cornerMarkerRef.current) {
+                  cornerMarkerRef.current.remove();
+                  cornerMarkerRef.current = null;
+                }
+                if (previewRectRef.current) {
+                  previewRectRef.current.remove();
+                  previewRectRef.current = null;
+                }
               }}
               className="text-[11px] underline text-[#94A3B8] hover:text-[#F8FAFC] cursor-pointer ml-2"
             >
