@@ -8,7 +8,12 @@ from app.core.config import Settings, get_settings
 from app.domain.contracts import AnalysisCacheProtocol
 from app.domain.engine import run_climate_hazard_analysis
 from app.domain.grid import generate_bounding_box_grid
-from app.domain.models import BaselineConfig, BoundingBox, GeoLocation
+from app.domain.models import (
+    BaselineConfig,
+    BoundingBox,
+    DailyWeatherObservation,
+    GeoLocation,
+)
 from app.domain.spatial_aggregation import aggregate_grid_daily_series
 from app.schemas.requests import BoundingBoxAnalysisQuery, HeatwaveAnalysisQuery
 from app.schemas.responses import (
@@ -265,7 +270,7 @@ class AnalysisService:
         # 3. Ingest/retrieve observations with concurrency throttling to prevent upstream rate limiting
         sem = asyncio.Semaphore(1)
 
-        async def fetch_sample_point(point: GeoLocation) -> list[DailyObservation]:
+        async def fetch_sample_point(point: GeoLocation) -> list[DailyWeatherObservation]:
             async with sem:
                 res = await self._weather_service.ensure_historical_observations(
                     location=point,
