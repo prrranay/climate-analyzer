@@ -101,8 +101,8 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
       </div>
 
       {/* Preset Regional Hotspot Buttons */}
-      <div className="space-y-1">
-        <span className="text-[10px] text-[#64748B] font-mono uppercase tracking-wider block">
+      <div className="space-y-1.5">
+        <span className="text-xs text-[#94A3B8] font-semibold uppercase tracking-wider block">
           Preset Spatial Corridors:
         </span>
         <div className="flex flex-wrap gap-1.5">
@@ -136,7 +136,7 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
       {/* Accessible Coordinate Input Grid */}
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label htmlFor={minLatId} className="block text-[11px] font-mono text-[#64748B] mb-1">
+          <label htmlFor={minLatId} className="block text-xs font-mono text-[#94A3B8] mb-1">
             Min Lat (South)
           </label>
           <input
@@ -148,11 +148,11 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
             value={values.min_lat}
             onChange={(e) => handleChange("min_lat", e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
+            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
           />
         </div>
         <div>
-          <label htmlFor={maxLatId} className="block text-[11px] font-mono text-[#64748B] mb-1">
+          <label htmlFor={maxLatId} className="block text-xs font-mono text-[#94A3B8] mb-1">
             Max Lat (North)
           </label>
           <input
@@ -164,11 +164,11 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
             value={values.max_lat}
             onChange={(e) => handleChange("max_lat", e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
+            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
           />
         </div>
         <div>
-          <label htmlFor={minLonId} className="block text-[11px] font-mono text-[#64748B] mb-1">
+          <label htmlFor={minLonId} className="block text-xs font-mono text-[#94A3B8] mb-1">
             Min Lon (West)
           </label>
           <input
@@ -180,11 +180,11 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
             value={values.min_lon}
             onChange={(e) => handleChange("min_lon", e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
+            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
           />
         </div>
         <div>
-          <label htmlFor={maxLonId} className="block text-[11px] font-mono text-[#64748B] mb-1">
+          <label htmlFor={maxLonId} className="block text-xs font-mono text-[#94A3B8] mb-1">
             Max Lon (East)
           </label>
           <input
@@ -196,7 +196,7 @@ export const BoundingBoxInput: React.FC<BoundingBoxInputProps> = ({
             value={values.max_lon}
             onChange={(e) => handleChange("max_lon", e.target.value)}
             disabled={disabled}
-            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
+            className="w-full px-3 py-1.5 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] font-mono focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] outline-none"
           />
         </div>
       </div>

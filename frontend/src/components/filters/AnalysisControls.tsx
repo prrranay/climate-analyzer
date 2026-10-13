@@ -77,18 +77,18 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
   return (
     <div className="flex flex-col h-full justify-between">
       {/* Scrollable Filters Body */}
-      <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-1">
+      <div className="flex-1 overflow-y-auto space-y-5 custom-scrollbar pr-1">
         {/* 1. Geographic Selection Mode Toggle (FIRST in sidebar) */}
         <div>
-          <label className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wider mb-1.5">
+          <label className="block text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider mb-2">
             GEOGRAPHIC SELECTION METHOD
           </label>
-          <div className="grid grid-cols-3 gap-1 p-1 bg-[#090D16] border border-[#334155] rounded-md text-xs">
+          <div className="grid grid-cols-3 gap-1 p-1 bg-[#090D16] border border-[#334155] rounded-md text-[13px]">
           <button
             type="button"
             onClick={() => onGeographicModeChange("search")}
             disabled={isLoading}
-            className={`py-1.5 px-2 text-center font-medium rounded transition-all cursor-pointer ${
+            className={`py-2 px-2 text-center font-medium rounded transition-all cursor-pointer ${
               geographicMode === "search"
                 ? "bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-inner"
                 : "text-[#94A3B8] hover:text-[#F8FAFC]"
@@ -100,7 +100,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onGeographicModeChange("coordinates")}
             disabled={isLoading}
-            className={`py-1.5 px-2 text-center font-medium rounded transition-all cursor-pointer ${
+            className={`py-2 px-2 text-center font-medium rounded transition-all cursor-pointer ${
               geographicMode === "coordinates"
                 ? "bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-inner"
                 : "text-[#94A3B8] hover:text-[#F8FAFC]"
@@ -112,7 +112,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onGeographicModeChange("bbox")}
             disabled={isLoading}
-            className={`py-1.5 px-2 text-center font-medium rounded transition-all cursor-pointer ${
+            className={`py-2 px-2 text-center font-medium rounded transition-all cursor-pointer ${
               geographicMode === "bbox"
                 ? "bg-[#1E293B] text-[#F8FAFC] border border-[#334155] shadow-inner"
                 : "text-[#94A3B8] hover:text-[#F8FAFC]"
@@ -126,80 +126,17 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
       {/* 2. Active Geographic Mode Controls (Rendered immediately after Selection Method) */}
       {children && <div>{children}</div>}
 
-      {/* 3. Hazard Scope (Explicitly Heatwave Only) */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">
-            HAZARD SELECTION
-          </label>
-          <span className="text-[10px] font-mono text-[#FB923C] font-medium">
-            Release v1.0 Scope
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 gap-2">
-          {HAZARDS.map((h) => {
-            const isHeat = h.id === "heatwave";
-            return (
-              <div
-                key={h.id}
-                className={`p-3 rounded transition-all ${
-                  h.active
-                    ? "bg-[#F97316]/5 border border-[#F97316]/70 shadow-[0_0_12px_-2px_rgba(249,115,22,0.15)]"
-                    : "bg-[#0F172A]/40 border border-[#1E293B] opacity-60 cursor-not-allowed"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-6 h-6 rounded flex items-center justify-center ${
-                        h.active
-                          ? "bg-[#F97316] text-[#090D16]"
-                          : "bg-[#1E293B] text-[#64748B]"
-                      }`}
-                    >
-                      {isHeat ? (
-                        <Flame className="w-3.5 h-3.5 fill-[#090D16]" />
-                      ) : h.id === "cold_spell" ? (
-                        <Snowflake className="w-3.5 h-3.5 text-[#06B6D4]" />
-                      ) : (
-                        <Droplets className="w-3.5 h-3.5 text-amber-300" />
-                      )}
-                    </div>
-                    <span className="text-sm font-semibold text-[#F8FAFC]">
-                      {h.name}
-                    </span>
-                  </div>
-                  {h.active ? (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider bg-[#F97316]/20 text-[#FB923C] border border-[#F97316]/40 font-semibold uppercase">
-                      ACTIVE CLIMATOLOGY
-                    </span>
-                  ) : (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#1E293B] text-[#64748B] border border-[#1E293B]">
-                      Coming soon
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1.5 text-xs text-[#94A3B8] leading-snug">
-                  {h.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* 3. Analysis Period Range Controls */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-[#F97316]" />
-            <label className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wider">
-              ANALYSIS PERIOD RANGE
+            <Calendar className="w-4 h-4 text-[#F97316]" />
+            <label className="text-[12px] font-semibold text-[#94A3B8] uppercase tracking-wider">
+              ANALYSIS PERIOD
             </label>
           </div>
           <span
-            className={`text-[10px] font-mono ${
+            className={`text-[11px] font-mono ${
               isPeriodValid ? "text-[#94A3B8]" : "text-rose-400 font-semibold"
             }`}
           >
@@ -207,9 +144,9 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           <div>
-            <label htmlFor={startYearId} className="block text-[10px] font-mono text-[#64748B] mb-1">
+            <label htmlFor={startYearId} className="block text-[11px] font-mono text-[#94A3B8] mb-1">
               Start Year (≥ {MIN_ANALYSIS_YEAR})
             </label>
             <input
@@ -222,7 +159,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                 onChange({ startYear: parseInt(e.target.value) || MIN_ANALYSIS_YEAR })
               }
               disabled={isLoading}
-              className={`w-full px-3 py-1.5 rounded bg-[#090D16] border text-xs text-[#F8FAFC] font-mono text-center outline-none transition-all ${
+              className={`w-full px-3 py-2 rounded bg-[#090D16] border text-sm text-[#F8FAFC] font-mono text-center outline-none transition-all ${
                 isPeriodValid
                   ? "border-[#334155] focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]"
                   : "border-rose-500 text-rose-200"
@@ -230,7 +167,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             />
           </div>
           <div>
-            <label htmlFor={endYearId} className="block text-[10px] font-mono text-[#64748B] mb-1">
+            <label htmlFor={endYearId} className="block text-[11px] font-mono text-[#94A3B8] mb-1">
               End Year (≤ {CURRENT_YEAR})
             </label>
             <input
@@ -243,7 +180,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                 onChange({ endYear: parseInt(e.target.value) || CURRENT_YEAR })
               }
               disabled={isLoading}
-              className={`w-full px-3 py-1.5 rounded bg-[#090D16] border text-xs text-[#F8FAFC] font-mono text-center outline-none transition-all ${
+              className={`w-full px-3 py-2 rounded bg-[#090D16] border text-sm text-[#F8FAFC] font-mono text-center outline-none transition-all ${
                 isPeriodValid
                   ? "border-[#334155] focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]"
                   : "border-rose-500 text-rose-200"
@@ -254,9 +191,9 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
 
         {/* Validation Error Message */}
         {!isPeriodValid && (
-          <div className="p-2 rounded bg-rose-950/30 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-            <span className="text-[11px]">
+          <div className="p-2.5 rounded bg-rose-950/30 border border-rose-500/30 text-rose-300 text-[13px] flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <span>
               {!isYearOrderValid
                 ? "Start year cannot exceed end year."
                 : !isMinYearValid
@@ -269,12 +206,12 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
         )}
 
         {/* Quick Range Presets */}
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="flex flex-wrap gap-1.5 pt-0.5">
           <button
             type="button"
             onClick={() => onChange({ startYear: 1991, endYear: 2020 })}
             disabled={isLoading}
-            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               formState.startYear === 1991 && formState.endYear === 2020
                 ? "bg-[#1E293B] border border-[#F97316]/40 text-[#FB923C] font-semibold"
                 : "bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]"
@@ -286,7 +223,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onChange({ startYear: 1980, endYear: 2023 })}
             disabled={isLoading}
-            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               formState.startYear === 1980 && formState.endYear === 2023
                 ? "bg-[#1E293B] border border-[#F97316]/40 text-[#FB923C] font-semibold"
                 : "bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]"
@@ -298,7 +235,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={() => onChange({ startYear: 1950, endYear: 2020 })}
             disabled={isLoading}
-            className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer ${
               formState.startYear === 1950 && formState.endYear === 2020
                 ? "bg-[#1E293B] border border-[#F97316]/40 text-[#FB923C] font-semibold"
                 : "bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC]"
@@ -309,35 +246,95 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
         </div>
       </div>
 
-      {/* 4. Advanced Detection Parameters Accordion */}
+      {/* 4. Advanced Detection Parameters & Hazard Scope Accordion */}
       <div className="border border-[#334155] rounded bg-[#0F172A]/50 overflow-hidden">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-[#1E293B]/40 transition-colors cursor-pointer"
+          className="w-full px-3 py-2.5 flex items-center justify-between text-left hover:bg-[#1E293B]/40 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2">
-            <Sliders className="w-3.5 h-3.5 text-[#F97316]" />
-            <span className="text-xs font-medium text-[#F8FAFC]">
+            <Sliders className="w-4 h-4 text-[#F97316]" />
+            <span className="text-[13px] font-medium text-[#F8FAFC]">
               Detection Parameters &amp; Model
             </span>
           </div>
           {showAdvanced ? (
-            <ChevronUp className="w-3.5 h-3.5 text-[#64748B]" />
+            <ChevronUp className="w-4 h-4 text-[#64748B]" />
           ) : (
-            <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />
+            <ChevronDown className="w-4 h-4 text-[#64748B]" />
           )}
         </button>
 
         {showAdvanced && (
-          <div className="p-3 border-t border-[#334155] space-y-3 bg-[#090D16]/60">
+          <div className="p-3.5 border-t border-[#334155] space-y-4 bg-[#090D16]/60">
+            {/* Hazard Scope (Explicitly Heatwave Only) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-[12px] font-semibold text-[#94A3B8] uppercase tracking-wider">
+                  HAZARD SCOPE
+                </label>
+                <span className="text-[10px] font-mono text-[#FB923C] font-medium">
+                  Release v1.0
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {HAZARDS.map((h) => {
+                  const isHeat = h.id === "heatwave";
+                  return (
+                    <div
+                      key={h.id}
+                      className={`p-2.5 rounded transition-all ${
+                        h.active
+                          ? "bg-[#F97316]/5 border border-[#F97316]/70 shadow-[0_0_12px_-2px_rgba(249,115,22,0.15)]"
+                          : "bg-[#0F172A]/40 border border-[#1E293B] opacity-60 cursor-not-allowed"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-6 h-6 rounded flex items-center justify-center ${
+                              h.active
+                                ? "bg-[#F97316] text-[#090D16]"
+                                : "bg-[#1E293B] text-[#64748B]"
+                            }`}
+                          >
+                            {isHeat ? (
+                              <Flame className="w-3.5 h-3.5 fill-[#090D16]" />
+                            ) : h.id === "cold_spell" ? (
+                              <Snowflake className="w-3.5 h-3.5 text-[#06B6D4]" />
+                            ) : (
+                              <Droplets className="w-3.5 h-3.5 text-amber-300" />
+                            )}
+                          </div>
+                          <span className="text-[13px] font-semibold text-[#F8FAFC]">
+                            {h.name}
+                          </span>
+                        </div>
+                        {h.active ? (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono tracking-wider bg-[#F97316]/20 text-[#FB923C] border border-[#F97316]/40 font-semibold uppercase">
+                            ACTIVE
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#1E293B] text-[#64748B] border border-[#1E293B]">
+                            Coming soon
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Climatological Baseline Period */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-[#94A3B8]">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[13px] text-[#94A3B8]">
                   Climatological Baseline
                 </label>
-                <span className="text-[10px] text-[#FB923C] font-mono">
+                <span className="text-[11px] text-[#FB923C] font-mono">
                   {formState.baselineStartYear}–{formState.baselineEndYear}
                 </span>
               </div>
@@ -353,7 +350,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                     })
                   }
                   disabled={isLoading}
-                  className="px-2 py-1 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono text-center outline-none focus:border-[#F97316]"
+                  className="px-2.5 py-1.5 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] font-mono text-center outline-none focus:border-[#F97316]"
                 />
                 <input
                   type="number"
@@ -366,18 +363,18 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                     })
                   }
                   disabled={isLoading}
-                  className="px-2 py-1 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] font-mono text-center outline-none focus:border-[#F97316]"
+                  className="px-2.5 py-1.5 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] font-mono text-center outline-none focus:border-[#F97316]"
                 />
               </div>
             </div>
 
             {/* Threshold Percentile */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-[#94A3B8]">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[13px] text-[#94A3B8]">
                   Threshold Percentile
                 </label>
-                <span className="text-xs text-[#FB923C] font-mono font-semibold">
+                <span className="text-[13px] text-[#FB923C] font-mono font-semibold">
                   {formState.thresholdPercentile}th %ile
                 </span>
               </div>
@@ -395,7 +392,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                 disabled={isLoading}
                 className="w-full accent-[#F97316] cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-[#64748B] font-mono mt-0.5">
+              <div className="flex justify-between text-[11px] text-[#94A3B8] font-mono mt-0.5">
                 <span>80% (Moderate)</span>
                 <span>95% (Standard)</span>
                 <span>99% (Rare)</span>
@@ -404,11 +401,11 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
 
             {/* Min Consecutive Days */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-[#94A3B8]">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[13px] text-[#94A3B8]">
                   Min Consecutive Days
                 </label>
-                <span className="text-xs text-[#FB923C] font-mono font-semibold">
+                <span className="text-[13px] text-[#FB923C] font-mono font-semibold">
                   {formState.minConsecutiveDays} days
                 </span>
               </div>
@@ -430,7 +427,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
 
             {/* Reanalysis Model Dataset */}
             <div>
-              <label className="block text-xs text-[#94A3B8] mb-1">
+              <label className="block text-[13px] text-[#94A3B8] mb-1.5">
                 Reanalysis Model Source
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -438,27 +435,27 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
                   type="button"
                   onClick={() => onChange({ model: "ERA5" })}
                   disabled={isLoading}
-                  className={`py-1.5 px-2 rounded text-xs border text-left cursor-pointer transition-colors ${
+                  className={`py-2 px-2.5 rounded text-[13px] border text-left cursor-pointer transition-colors ${
                     formState.model === "ERA5"
                       ? "bg-[#1E293B] border-[#F97316]/50 text-[#FB923C]"
                       : "bg-[#090D16] border-[#334155] text-[#94A3B8]"
                   }`}
                 >
                   <div className="font-semibold">ERA5</div>
-                  <div className="text-[10px] text-[#64748B]">0.25° Global</div>
+                  <div className="text-[11px] text-[#64748B]">0.25° Global</div>
                 </button>
                 <button
                   type="button"
                   onClick={() => onChange({ model: "ERA5_LAND" })}
                   disabled={isLoading}
-                  className={`py-1.5 px-2 rounded text-xs border text-left cursor-pointer transition-colors ${
+                  className={`py-2 px-2.5 rounded text-[13px] border text-left cursor-pointer transition-colors ${
                     formState.model === "ERA5_LAND"
                       ? "bg-[#1E293B] border-[#F97316]/50 text-[#FB923C]"
                       : "bg-[#090D16] border-[#334155] text-[#94A3B8]"
                   }`}
                 >
                   <div className="font-semibold">ERA5-Land</div>
-                  <div className="text-[10px] text-[#64748B]">0.1° Land</div>
+                  <div className="text-[11px] text-[#64748B]">0.1° Land</div>
                 </button>
               </div>
             </div>
@@ -474,16 +471,16 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             type="button"
             onClick={onSubmit}
             disabled={!canSubmit || isLoading || !isPeriodValid}
-            className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:brightness-110 active:scale-[0.985] shadow-[0_0_16px_-2px_rgba(249,115,22,0.35)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2 text-xs"
+            className="flex-1 py-2.5 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:brightness-110 active:scale-[0.985] shadow-[0_0_16px_-2px_rgba(249,115,22,0.35)] disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center justify-center gap-2 text-sm"
           >
             {isLoading ? (
               <>
-                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Analyzing Climatology...</span>
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5 fill-white" />
+                <Play className="w-4 h-4 fill-white" />
                 <span>Run Heatwave Analysis</span>
               </>
             )}
@@ -496,7 +493,7 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
               title="Cancel analysis request"
               className="p-2.5 rounded-lg border border-rose-500/30 bg-rose-950/20 hover:bg-rose-950/40 text-rose-300 transition-colors cursor-pointer"
             >
-              <Square className="w-3.5 h-3.5 fill-rose-300" />
+              <Square className="w-4 h-4 fill-rose-300" />
             </button>
           )}
 
@@ -507,13 +504,13 @@ export const AnalysisControls: React.FC<AnalysisControlsProps> = ({
             disabled={isLoading}
             className="p-2.5 rounded-lg bg-[#1E293B] border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#1E293B]/80 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
 
         {!canSubmit && !isLoading && (
-          <div className="mt-2 flex items-center gap-2 text-[11px] text-[#94A3B8] bg-[#0F172A] p-2 rounded-lg border border-[#334155]">
-            <Info className="w-3.5 h-3.5 text-[#F97316] shrink-0" />
+          <div className="mt-2 flex items-center gap-2 text-[13px] text-[#94A3B8] bg-[#0F172A] p-2.5 rounded-lg border border-[#334155]">
+            <Info className="w-4 h-4 text-[#F97316] shrink-0" />
             <span>
               {geographicMode === "search"
                 ? "Please search for and select a target city or region."

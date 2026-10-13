@@ -119,7 +119,7 @@ export const RegionSearch: React.FC<RegionSearchProps> = ({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder="Type city or state (e.g. Hyderabad, Madrid, Phoenix)..."
-          className="w-full pl-9 pr-10 py-2 rounded bg-[#090D16] border border-[#334155] text-xs text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] transition-all disabled:opacity-50"
+          className="w-full pl-9 pr-10 py-2 rounded bg-[#090D16] border border-[#334155] text-sm text-[#F8FAFC] placeholder-[#64748B] focus:outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316] transition-all disabled:opacity-50"
         />
         <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
           {isLoading && (
@@ -182,15 +182,15 @@ export const RegionSearch: React.FC<RegionSearchProps> = ({
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-[#64748B] font-mono">
+                          <div className="text-[11px] text-[#94A3B8] font-mono">
                             {loc.latitude.toFixed(4)}°, {loc.longitude.toFixed(4)}°
                             {loc.elevation !== null && loc.elevation !== undefined && (
-                              <span className="ml-1.5 text-[#64748B]">Alt: {loc.elevation}m</span>
+                              <span className="ml-1.5 text-[#94A3B8]">Alt: {loc.elevation}m</span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <span className="text-[10px] text-[#FB923C] font-mono">
+                      <span className="text-xs text-[#FB923C] font-mono">
                         Select
                       </span>
                     </button>
@@ -198,7 +198,7 @@ export const RegionSearch: React.FC<RegionSearchProps> = ({
                 })}
               </div>
             ) : query.trim().length >= 2 && !isLoading && !error ? (
-              <div className="p-3 text-center text-xs text-[#64748B]">
+              <div className="p-3 text-center text-xs text-[#94A3B8]">
                 No matching locations found for &ldquo;{query}&rdquo;
               </div>
             ) : null}
@@ -221,11 +221,11 @@ export const RegionSearch: React.FC<RegionSearchProps> = ({
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-[#F97316]" />
-              <span className="text-[11px] font-semibold text-[#F97316] tracking-wider uppercase">
+              <span className="text-xs font-semibold text-[#F97316] tracking-wider uppercase">
                 SELECTED TARGET
               </span>
             </div>
-            <span className="text-[10px] font-mono text-[#64748B]">ERA5 Grid Point</span>
+            <span className="text-xs font-mono text-[#94A3B8]">ERA5 Grid Point</span>
           </div>
           <div className="text-sm font-semibold text-[#F8FAFC]">
             {selectedLocation.name || "Custom Point"}{" "}
@@ -236,14 +236,14 @@ export const RegionSearch: React.FC<RegionSearchProps> = ({
               </span>
             )}
           </div>
-          <div className="mt-2 pt-2 border-t border-[#1E293B] flex flex-col gap-0.5 text-[11px] font-mono text-[#64748B]">
+          <div className="mt-2 pt-2 border-t border-[#1E293B] flex flex-col gap-0.5 text-xs font-mono text-[#94A3B8]">
             <div>
-              Lat: <span className="text-[#F8FAFC]">{selectedLocation.latitude.toFixed(4)}°</span>
+              Lat: <span className="text-[#F8FAFC] font-semibold">{selectedLocation.latitude.toFixed(4)}°</span>
               {" | "}
-              Lon: <span className="text-[#F8FAFC]">{selectedLocation.longitude.toFixed(4)}°</span>
+              Lon: <span className="text-[#F8FAFC] font-semibold">{selectedLocation.longitude.toFixed(4)}°</span>
             </div>
             {selectedLocation.timezone && (
-              <div>Timezone: {selectedLocation.timezone}</div>
+              <div>Timezone: <span className="text-[#F8FAFC]">{selectedLocation.timezone}</span></div>
             )}
           </div>
         </div>

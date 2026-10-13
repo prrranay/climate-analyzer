@@ -152,17 +152,17 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
       {/* Header & Accessible Legend */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
             <Flame className="w-4 h-4 text-orange-400" />
             Annual Heatwave Event Frequency
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-[13px] text-zinc-400 mt-0.5">
             Discrete qualifying heatwave event occurrences per calendar year
           </p>
         </div>
 
         {/* Legend with explicit texture/status patterns - not relying on color alone */}
-        <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-400">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400">
           <span className="flex items-center gap-1.5" title="Included in OLS regression">
             <span className="w-3 h-3 rounded-xs bg-orange-500 border border-orange-400" />
             <span>Reliable (In Trend)</span>
@@ -201,23 +201,23 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="year"
-              stroke="#71717a"
-              fontSize={11}
+              stroke="#a1a1aa"
+              fontSize={12}
               tickLine={false}
-              axisLine={{ stroke: "#3f3f46" }}
+              axisLine={{ stroke: "#52525b" }}
             />
             <YAxis
               stroke="#f97316"
-              fontSize={11}
+              fontSize={12}
               tickLine={false}
-              axisLine={{ stroke: "#3f3f46" }}
+              axisLine={{ stroke: "#52525b" }}
               allowDecimals={false}
               label={{
                 value: "Events / Year",
                 angle: -90,
                 position: "insideLeft",
                 fill: "#f97316",
-                fontSize: 10,
+                fontSize: 11,
                 offset: 15,
               }}
             />
@@ -252,7 +252,7 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
       </div>
 
       {/* Decadal Frequency Trend Footer */}
-      <div className="pt-3 border-t border-zinc-800 text-xs flex flex-wrap items-center justify-between gap-2">
+      <div className="pt-3 border-t border-zinc-800 text-[13px] flex flex-wrap items-center justify-between gap-2">
         {hasTrend ? (
           <div className="text-zinc-300">
             OLS Linear Trend:{" "}
@@ -269,14 +269,14 @@ export const AnnualFrequencyChart: React.FC<AnnualFrequencyChartProps> = ({
           </div>
         ) : (
           <div className="text-zinc-400 italic flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <Info className="w-4 h-4 text-zinc-500 shrink-0" />
             <span>
               Insufficient reliable observation years (&lt;10y) to derive a statistically sound trend.
             </span>
           </div>
         )}
 
-        <div className="text-[11px] text-zinc-500 font-mono">
+        <div className="text-xs text-zinc-500 font-mono">
           Regression Sample: {frequencyTrend?.sample_size_years ?? metrics.length} reliable years
         </div>
       </div>

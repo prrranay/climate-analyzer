@@ -35,11 +35,11 @@ export const TrendSummaryPanel: React.FC<TrendSummaryPanelProps> = ({ trends }) 
     <div className="space-y-3.5">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#F8FAFC] flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[#F8FAFC] flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[#F97316]" />
             Statistical Trend Analysis (OLS Linear Regression)
           </h3>
-          <p className="text-xs text-[#94A3B8] mt-0.5">
+          <p className="text-[13px] text-[#CBD5E1] mt-0.5">
             Decadal change across reliable historical observations (p &lt; 0.05 indicates significance)
           </p>
         </div>
@@ -60,16 +60,16 @@ export const TrendSummaryPanel: React.FC<TrendSummaryPanelProps> = ({ trends }) 
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h4 className="text-sm font-semibold text-[#F8FAFC]">{title}</h4>
-                    <p className="text-[11px] text-[#64748B]">{subtitle}</p>
+                    <h4 className="text-[15px] font-semibold text-[#F8FAFC]">{title}</h4>
+                    <p className="text-xs text-[#94A3B8]">{subtitle}</p>
                   </div>
                   <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border shrink-0 ${badge.className}`}
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${badge.className}`}
                   >
-                    {data.direction === "increasing" && <TrendingUp className="w-3 h-3" />}
-                    {data.direction === "decreasing" && <TrendingDown className="w-3 h-3" />}
-                    {data.direction === "stable" && <Minus className="w-3 h-3" />}
-                    {data.direction === "indeterminate" && <HelpCircle className="w-3 h-3" />}
+                    {data.direction === "increasing" && <TrendingUp className="w-3.5 h-3.5" />}
+                    {data.direction === "decreasing" && <TrendingDown className="w-3.5 h-3.5" />}
+                    {data.direction === "stable" && <Minus className="w-3.5 h-3.5" />}
+                    {data.direction === "indeterminate" && <HelpCircle className="w-3.5 h-3.5" />}
                     {badge.label}
                   </span>
                 </div>
@@ -80,35 +80,35 @@ export const TrendSummaryPanel: React.FC<TrendSummaryPanelProps> = ({ trends }) 
                       <span className="text-2xl font-bold font-mono text-[#F8FAFC]">
                         {formatSlope(data.slope_per_decade, 2)}
                       </span>
-                      <span className="text-xs font-mono text-[#94A3B8]">{data.unit}</span>
+                      <span className="text-sm font-mono text-[#CBD5E1]">{data.unit}</span>
                     </div>
 
-                    <div className="space-y-1 text-xs text-[#94A3B8] font-mono bg-[#090D16] p-2.5 rounded border border-[#1E293B]">
-                      <div className="flex justify-between">
-                        <span className="text-[#64748B]">p-value:</span>
+                    <div className="space-y-1.5 text-[13px] font-mono bg-[#090D16] p-3 rounded-lg border border-[#1E293B]">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#94A3B8] font-medium">p-value:</span>
                         <span
-                          className={data.is_significant ? "text-[#10B981] font-semibold" : "text-[#94A3B8]"}
+                          className={data.is_significant ? "text-[#10B981] font-semibold" : "text-[#CBD5E1]"}
                         >
                           {formatPValue(data.p_value)}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#64748B]">Annual rate:</span>
-                        <span className="text-[#F8FAFC]">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#94A3B8] font-medium">Annual rate:</span>
+                        <span className="text-[#F8FAFC] font-semibold">
                           {data.slope_per_year !== null
                             ? `${formatSlope(data.slope_per_year, 3)}/yr`
                             : "N/A"}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#64748B]">Sample:</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#94A3B8] font-medium">Sample:</span>
                         <span className="text-[#F8FAFC]">{data.sample_size_years} years</span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3 bg-[#090D16] rounded border border-[#1E293B] text-xs text-[#94A3B8] flex items-start gap-2">
-                    <Info className="w-3.5 h-3.5 text-[#64748B] shrink-0 mt-0.5" />
+                  <div className="p-3 bg-[#090D16] rounded-lg border border-[#1E293B] text-[13px] text-[#CBD5E1] flex items-start gap-2">
+                    <Info className="w-4 h-4 text-[#F97316] shrink-0 mt-0.5" />
                     <span>
                       Insufficient reliable data ({data.sample_size_years} &lt; 10 quality years) to estimate trend.
                     </span>
@@ -117,7 +117,7 @@ export const TrendSummaryPanel: React.FC<TrendSummaryPanelProps> = ({ trends }) 
               </div>
 
               {data.description && (
-                <p className="text-xs text-[#64748B] pt-2 border-t border-[#1E293B] leading-relaxed">
+                <p className="text-[13px] text-[#CBD5E1] pt-2.5 border-t border-[#1E293B] leading-relaxed">
                   {data.description}
                 </p>
               )}

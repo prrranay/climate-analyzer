@@ -165,17 +165,17 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
       {/* Header & View Mode Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
             <Thermometer className="w-4 h-4 text-rose-400" />
             Heatwave Intensity &amp; Thermal Exceedance
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-[13px] text-zinc-400 mt-0.5">
             Daily excess-temperature above threshold (°C) and cumulative degree-days (°C-days)
           </p>
         </div>
 
         {/* View mode toggle to prevent unit mixing */}
-        <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-[13px] self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setViewMode("both")}
@@ -217,12 +217,12 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
         {/* Chart 1: Daily Excess Temperature & Absolute Peak in Celsius (°C) */}
         {(viewMode === "temperature" || viewMode === "both") && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-300">
+            <div className="flex items-center justify-between text-[13px] text-zinc-300">
               <span className="font-semibold text-rose-400 flex items-center gap-1.5">
                 <Thermometer className="w-3.5 h-3.5" />
                 Thermal Metrics (Celsius, °C)
               </span>
-              <span className="text-[11px] text-zinc-500 font-mono">
+              <span className="text-xs text-zinc-500 font-mono">
                 Years with 0 events show gaps (intensity is undefined, not 0°C)
               </span>
             </div>
@@ -233,23 +233,23 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis
                     dataKey="year"
-                    stroke="#71717a"
-                    fontSize={11}
+                    stroke="#a1a1aa"
+                    fontSize={12}
                     tickLine={false}
-                    axisLine={{ stroke: "#3f3f46" }}
+                    axisLine={{ stroke: "#52525b" }}
                   />
                   <YAxis
                     stroke="#f43f5e"
-                    fontSize={11}
+                    fontSize={12}
                     tickLine={false}
-                    axisLine={{ stroke: "#3f3f46" }}
+                    axisLine={{ stroke: "#52525b" }}
                     domain={["auto", "auto"]}
                     label={{
                       value: "Temperature (°C)",
                       angle: -90,
                       position: "insideLeft",
                       fill: "#f43f5e",
-                      fontSize: 10,
+                      fontSize: 11,
                       offset: 15,
                     }}
                   />
@@ -292,12 +292,12 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
         {/* Chart 2: Cumulative Degree-Days (°C-days) */}
         {(viewMode === "degree_days" || viewMode === "both") && (
           <div className="space-y-2 pt-2 border-t border-zinc-800/60">
-            <div className="flex items-center justify-between text-xs text-zinc-300">
+            <div className="flex items-center justify-between text-[13px] text-zinc-300">
               <span className="font-semibold text-orange-400 flex items-center gap-1.5">
                 <Flame className="w-3.5 h-3.5" />
                 Cumulative Thermal Burden (Degree-Days, °C-days)
               </span>
-              <span className="text-[11px] text-zinc-500 font-mono">
+              <span className="text-xs text-zinc-500 font-mono">
                 Integrated annual sum of exceedance degrees across all heatwave days
               </span>
             </div>
@@ -321,22 +321,22 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                   <XAxis
                     dataKey="year"
-                    stroke="#71717a"
-                    fontSize={11}
+                    stroke="#a1a1aa"
+                    fontSize={12}
                     tickLine={false}
-                    axisLine={{ stroke: "#3f3f46" }}
+                    axisLine={{ stroke: "#52525b" }}
                   />
                   <YAxis
                     stroke="#f97316"
-                    fontSize={11}
+                    fontSize={12}
                     tickLine={false}
-                    axisLine={{ stroke: "#3f3f46" }}
+                    axisLine={{ stroke: "#52525b" }}
                     label={{
                       value: "Cumulative (°C-days)",
                       angle: -90,
                       position: "insideLeft",
                       fill: "#f97316",
-                      fontSize: 10,
+                      fontSize: 11,
                       offset: 15,
                     }}
                   />
@@ -369,7 +369,7 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
       </div>
 
       {/* Cumulative Heat Burden Decadal Trend */}
-      <div className="pt-3 border-t border-zinc-800 text-xs flex flex-wrap items-center justify-between gap-2">
+      <div className="pt-3 border-t border-zinc-800 text-[13px] flex flex-wrap items-center justify-between gap-2">
         {hasTrend ? (
           <div className="text-zinc-300">
             Cumulative Heat Burden Trend:{" "}
@@ -386,12 +386,12 @@ export const HeatwaveIntensityChart: React.FC<HeatwaveIntensityChartProps> = ({
           </div>
         ) : (
           <div className="text-zinc-400 italic flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-zinc-500" />
+            <Info className="w-4 h-4 text-zinc-500" />
             <span>Insufficient data to compute cumulative intensity trend.</span>
           </div>
         )}
 
-        <div className="text-[11px] text-zinc-500 font-mono">
+        <div className="text-xs text-zinc-500 font-mono">
           Regression Sample: {intensityTrend?.sample_size_years ?? metrics.length} reliable years
         </div>
       </div>

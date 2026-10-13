@@ -287,7 +287,7 @@ export default function Home() {
       <Header />
 
       {/* Main Workspace Canvas */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 relative z-10 flex flex-col min-h-0 overflow-hidden">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 relative z-10 flex flex-col min-h-0 lg:overflow-hidden">
         {/* Workspace Top Subheader Banner Shelf */}
         <div className="mb-3 pb-2 border-b border-[#1E293B] flex items-center justify-between text-xs font-mono text-[#94A3B8] shrink-0">
           <div className="flex items-center gap-2">
@@ -307,10 +307,10 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Dual Column Analytical Layout with Independent Internal Scroll Panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch flex-1 min-h-0 overflow-hidden">
+        {/* Dual Column Analytical Layout with Independent Internal Scroll Panels on desktop; natural stack on mobile/tablet */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch flex-1 min-h-0 lg:overflow-hidden">
           {/* Left Column: Filter and Parameter Controls Rail */}
-          <aside className="lg:col-span-4 w-full h-full bg-[#090D16] border border-[#334155] rounded-xl shadow-lg flex flex-col overflow-hidden min-h-0">
+          <aside className="lg:col-span-4 w-full lg:h-full bg-[#090D16] border border-[#334155] rounded-xl shadow-lg flex flex-col lg:overflow-hidden min-h-0">
             {/* Top Meta Header inside Sidebar */}
             <div className="px-4 py-2.5 border-b border-[#1E293B] flex items-center justify-between shrink-0 bg-[#090D16]">
               <div className="flex items-center gap-2">
@@ -325,7 +325,7 @@ export default function Home() {
             </div>
 
             {/* Parameter Body & Execution Controls */}
-            <div className="flex-1 overflow-hidden p-3.5 flex flex-col min-h-0">
+            <div className="flex-1 lg:overflow-hidden p-3.5 flex flex-col min-h-0">
               <AnalysisControls
                 formState={formState}
                 onChange={handleUpdateForm}
@@ -364,8 +364,8 @@ export default function Home() {
             </div>
           </aside>
 
-          {/* Right Column: Dashboard Visualizations & Insights Canvas (Internal Scrolling) */}
-          <section className="lg:col-span-8 w-full h-full flex flex-col overflow-y-auto custom-scrollbar min-h-0 pr-1 space-y-4">
+          {/* Right Column: Dashboard Visualizations & Insights Canvas */}
+          <section className="lg:col-span-8 w-full lg:h-full flex flex-col lg:overflow-y-auto custom-scrollbar min-h-0 lg:pr-1 space-y-4">
             {/* Error Alert with Retry Action */}
             {error && (
               <ErrorAlert

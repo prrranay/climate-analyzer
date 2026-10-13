@@ -3,17 +3,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Flame,
-  Globe,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   Clock,
-  Layers,
   Activity,
-  Sun,
-  ShieldAlert,
   Loader2,
   XCircle,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 
 export interface ClimateFact {
@@ -124,7 +122,15 @@ const PROCESSING_STAGES: ProcessingStage[] = [
     label: "Quantifying Trend Statistics",
     detail: "Detecting multi-day hazard streaks and executing ordinary least squares (OLS) regressions...",
   },
+  {
+    minSeconds: 25,
+    label: "Finalizing Analysis",
+    detail: "Aggregating spatial results, computing final regressions, and serializing response payload...",
+  },
 ];
+
+const LONG_WAIT_THRESHOLD_S = 30;
+const VERY_LONG_WAIT_THRESHOLD_S = 60;
 
 interface ClimateLoadingStateProps {
   targetName: string;
@@ -183,17 +189,17 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
     }, TICK_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [isPaused, CLIMATE_FACTS.length]);
+  }, [isPaused]);
 
   const handleNextFact = useCallback(() => {
     setActiveFactIndex((curr) => (curr + 1) % CLIMATE_FACTS.length);
     setFactProgress(0);
-  }, [CLIMATE_FACTS.length]);
+  }, []);
 
   const handlePrevFact = useCallback(() => {
     setActiveFactIndex((curr) => (curr - 1 + CLIMATE_FACTS.length) % CLIMATE_FACTS.length);
     setFactProgress(0);
-  }, [CLIMATE_FACTS.length]);
+  }, []);
 
   const currentFact = CLIMATE_FACTS[activeFactIndex];
 
@@ -201,10 +207,10 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
   const currentStage = useMemo(() => {
     for (let i = PROCESSING_STAGES.length - 1; i >= 0; i--) {
       if (elapsedSeconds >= PROCESSING_STAGES[i].minSeconds) {
-        return PROCESSING_STAGES[i];
+        return { ...PROCESSING_STAGES[i], index: i };
       }
     }
-    return PROCESSING_STAGES[0];
+    return { ...PROCESSING_STAGES[0], index: 0 };
   }, [elapsedSeconds]);
 
   // Format elapsed time MM:SS
@@ -214,9 +220,13 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }, [elapsedSeconds]);
 
+  const isLongWait = elapsedSeconds >= LONG_WAIT_THRESHOLD_S;
+  const isVeryLongWait = elapsedSeconds >= VERY_LONG_WAIT_THRESHOLD_S;
+  const spanYears = endYear - startYear + 1;
+
   return (
     <div
-      className={`p-6 sm:p-8 rounded-xl bg-[#0F172A] border border-[#334155] flex flex-col items-center justify-center shadow-xl relative overflow-hidden transition-all duration-300 ${className}`}
+      className={`p-5 sm:p-7 rounded-xl bg-[#0F172A] border border-[#334155] flex flex-col items-center justify-center shadow-xl relative overflow-hidden transition-all duration-300 ${className}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -237,19 +247,19 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
         </div>
 
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-slate-100 flex items-center justify-center gap-2">
+          <h3 className="text-base sm:text-lg font-semibold text-slate-100 flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5">
             <span>Analyzing {targetName}</span>
             <span className="text-orange-400 font-mono text-sm">
               ({startYear}–{endYear})
             </span>
           </h3>
-          <p className="text-xs text-slate-400 mt-1 max-w-lg">
+          <p className="text-[13px] text-slate-400 mt-1.5 max-w-lg leading-relaxed">
             {currentStage.detail}
           </p>
         </div>
 
         {/* Query parameters pill */}
-        <div className="text-xs text-slate-400 font-mono bg-[#090D16] px-3.5 py-1.5 rounded-full border border-[#1E293B] text-center max-w-xl flex flex-wrap items-center justify-center gap-x-2 gap-y-1 shadow-sm">
+        <div className="text-[13px] text-slate-400 font-mono bg-[#090D16] px-3.5 py-2 rounded-lg border border-[#1E293B] text-center max-w-xl flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 shadow-sm">
           <span>Source: <strong className="text-slate-200">{model}</strong></span>
           <span className="text-slate-600">•</span>
           <span>Baseline: <strong className="text-slate-200">{baselineStartYear}–{baselineEndYear}</strong></span>
@@ -259,21 +269,77 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
           <span>Min Run: <strong className="text-slate-200">{minConsecutiveDays}d</strong></span>
         </div>
 
+        {/* Pipeline Progress Steps */}
+        <div className="w-full max-w-md pt-2">
+          <div className="flex items-center gap-1">
+            {PROCESSING_STAGES.map((stage, idx) => (
+              <div key={stage.label} className="flex-1 flex flex-col items-center gap-1">
+                <div
+                  className={`h-1.5 w-full rounded-full transition-all duration-500 ${
+                    idx < currentStage.index
+                      ? "bg-orange-500"
+                      : idx === currentStage.index
+                      ? "bg-orange-500/60 animate-pulse"
+                      : "bg-slate-800"
+                  }`}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between mt-1.5 text-[11px] text-slate-500 font-mono">
+            <span>Stage {currentStage.index + 1} of {PROCESSING_STAGES.length}</span>
+            <span>Not a completion estimate</span>
+          </div>
+        </div>
+
         {/* Live Status & Elapsed Timer Tracker */}
-        <div className="flex items-center gap-4 text-xs text-slate-400 pt-1">
-          <div className="flex items-center gap-1.5 bg-[#1E293B]/70 px-2.5 py-1 rounded-md border border-[#334155]/60">
+        <div className="flex flex-wrap items-center justify-center gap-3 text-[13px] text-slate-400 pt-1">
+          <div className="flex items-center gap-1.5 bg-[#1E293B]/70 px-3 py-1.5 rounded-md border border-[#334155]/60">
             <Activity className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
             <span className="text-slate-300 font-medium">{currentStage.label}</span>
           </div>
-          <div className="flex items-center gap-1.5 bg-[#1E293B]/70 px-2.5 py-1 rounded-md border border-[#334155]/60 font-mono">
+          <div className="flex items-center gap-1.5 bg-[#1E293B]/70 px-3 py-1.5 rounded-md border border-[#334155]/60 font-mono">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
             <span>Elapsed: <span className="text-slate-200 font-semibold">{formattedElapsed}</span></span>
           </div>
         </div>
+
+        {/* Long wait advisory */}
+        {isLongWait && (
+          <div
+            className={`w-full max-w-lg mt-1 p-3 rounded-lg border text-[13px] flex items-start gap-2.5 ${
+              isVeryLongWait
+                ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
+                : "bg-slate-800/50 border-slate-700/50 text-slate-300"
+            }`}
+          >
+            {isVeryLongWait ? (
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            ) : (
+              <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+            )}
+            <div>
+              {isVeryLongWait ? (
+                <>
+                  <p className="font-medium text-amber-300 mb-0.5">Analysis is taking longer than usual</p>
+                  <p className="text-amber-200/80 leading-relaxed">
+                    Large multi-decadal spans ({spanYears} years) over bounding-box regions can take 60–120s on first run while upstream data is ingested.
+                    Subsequent analyses for this region are cached and significantly faster. You can also try a narrower date range or a single-point query.
+                  </p>
+                </>
+              ) : (
+                <p className="leading-relaxed">
+                  Multi-decadal analyses ({spanYears} years) may take 30–90 seconds, especially on first-time ingestion.
+                  The data pipeline is actively processing — results will appear when complete.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Climate Fact Carousel Card */}
-      <div className="w-full max-w-2xl mt-6 relative z-10">
+      <div className="w-full max-w-2xl mt-5 relative z-10">
         <div className="bg-[#090D16]/90 border border-slate-700/60 rounded-xl p-4 sm:p-5 relative shadow-lg backdrop-blur-sm transition-all duration-300 hover:border-orange-500/40">
           {/* Header of Fact card */}
           <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3 mb-3">
@@ -282,23 +348,23 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
                 <Sparkles className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-[10px] font-mono tracking-wider font-semibold uppercase text-orange-400/90 block">
+                <span className="text-[11px] font-mono tracking-wider font-semibold uppercase text-orange-400/90 block">
                   {currentFact.category}
                 </span>
-                <span className="text-xs text-slate-400">Did you know?</span>
+                <span className="text-[13px] text-slate-400">Did you know?</span>
               </div>
             </div>
 
             {/* Fact navigation controls & counter */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-mono text-slate-500 pr-1">
+              <span className="text-xs font-mono text-slate-500 pr-1">
                 {activeFactIndex + 1}/{CLIMATE_FACTS.length}
               </span>
               <button
                 type="button"
                 onClick={handlePrevFact}
                 title="Previous fact"
-                className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                 aria-label="Previous fact"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -307,7 +373,7 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
                 type="button"
                 onClick={handleNextFact}
                 title="Next fact"
-                className="p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                 aria-label="Next fact"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -317,21 +383,21 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
 
           {/* Fact Content */}
           <div className="min-h-[70px] flex flex-col justify-center">
-            <h4 className="text-sm font-semibold text-slate-200 mb-1 flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+            <h4 className="text-[15px] font-semibold text-slate-200 mb-1.5 flex items-center gap-1.5">
+              <Flame className="w-4 h-4 text-orange-400 shrink-0" />
               {currentFact.title}
             </h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-[13px] text-slate-300 leading-relaxed">
               {currentFact.fact}
             </p>
           </div>
 
           {/* Footer note & auto-rotation progress bar */}
-          <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
             <span className="italic truncate">
               {currentFact.sourceNote ? `Ref: ${currentFact.sourceNote}` : "Peer-reviewed climatological science"}
             </span>
-            <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+            <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
               {isPaused ? "Paused on hover" : "Auto-rotating insights"}
             </span>
           </div>
@@ -348,15 +414,20 @@ export const ClimateLoadingState: React.FC<ClimateLoadingStateProps> = ({
 
       {/* Cancel analysis action */}
       {onCancel && (
-        <div className="mt-5 relative z-10 flex flex-col items-center">
+        <div className="mt-4 relative z-10 flex flex-col items-center gap-1.5">
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 hover:underline cursor-pointer transition-colors px-3 py-1.5 rounded-md hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20"
+            className="inline-flex items-center gap-1.5 text-[13px] text-rose-400 hover:text-rose-300 hover:underline cursor-pointer transition-colors px-3 py-1.5 rounded-md hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20"
           >
-            <XCircle className="w-3.5 h-3.5" />
+            <XCircle className="w-4 h-4" />
             Cancel Analysis Request
           </button>
+          {isVeryLongWait && (
+            <p className="text-xs text-slate-500 text-center">
+              Cancel and retry with a smaller date range if this is your first query for this region.
+            </p>
+          )}
         </div>
       )}
     </div>

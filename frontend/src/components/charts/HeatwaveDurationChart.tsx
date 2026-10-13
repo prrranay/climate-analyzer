@@ -163,11 +163,11 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
             <Clock className="w-4 h-4 text-amber-400" />
             Heatwave Duration (Days)
           </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
+          <p className="text-[13px] text-zinc-400 mt-0.5">
             Cumulative annual heatwave days and mean duration per discrete event (in days)
           </p>
         </div>
@@ -205,23 +205,23 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="year"
-              stroke="#71717a"
-              fontSize={11}
+              stroke="#a1a1aa"
+              fontSize={12}
               tickLine={false}
-              axisLine={{ stroke: "#3f3f46" }}
+              axisLine={{ stroke: "#52525b" }}
             />
             <YAxis
               stroke="#fbbf24"
-              fontSize={11}
+              fontSize={12}
               tickLine={false}
-              axisLine={{ stroke: "#3f3f46" }}
+              axisLine={{ stroke: "#52525b" }}
               allowDecimals={false}
               label={{
                 value: "Duration (Days / Year)",
                 angle: -90,
                 position: "insideLeft",
                 fill: "#fbbf24",
-                fontSize: 10,
+                fontSize: 11,
                 offset: 15,
               }}
             />
@@ -268,7 +268,7 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
       </div>
 
       {/* Decadal Duration Trend Footer */}
-      <div className="pt-3 border-t border-zinc-800 text-xs flex flex-wrap items-center justify-between gap-2">
+      <div className="pt-3 border-t border-zinc-800 text-[13px] flex flex-wrap items-center justify-between gap-2">
         {hasTrend ? (
           <div className="text-zinc-300">
             Duration Trend:{" "}
@@ -285,12 +285,12 @@ export const HeatwaveDurationChart: React.FC<HeatwaveDurationChartProps> = ({
           </div>
         ) : (
           <div className="text-zinc-400 italic flex items-center gap-1.5">
-            <Info className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            <Info className="w-4 h-4 text-zinc-500 shrink-0" />
             <span>Insufficient data to compute duration trend.</span>
           </div>
         )}
 
-        <div className="text-[11px] text-zinc-500 font-mono">
+        <div className="text-xs text-zinc-500 font-mono">
           Regression Sample: {durationTrend?.sample_size_years ?? metrics.length} reliable years
         </div>
       </div>

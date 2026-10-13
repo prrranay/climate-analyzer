@@ -48,15 +48,15 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
         <div className="flex items-center gap-2.5">
           <MapPin className="w-4 h-4 text-[#F97316] shrink-0" />
           <div>
-            <div className="text-[10px] uppercase font-semibold text-[#64748B] tracking-wider">
+            <div className="text-xs uppercase font-semibold text-[#94A3B8] tracking-wider">
               ANALYZED GEOGRAPHIC TARGET
             </div>
-            <div className="text-sm font-semibold text-[#F8FAFC]">{regionLabel}</div>
+            <div className="text-base font-semibold text-[#F8FAFC]">{regionLabel}</div>
           </div>
         </div>
 
         <div className="flex items-center gap-4 text-xs font-mono">
-          <div className="flex items-center gap-1.5 text-[#94A3B8]">
+          <div className="flex items-center gap-1.5 text-[#CBD5E1]">
             <Calendar className="w-3.5 h-3.5 text-[#F97316]" />
             <span>
               Period: {analysis_window.start_year}–{analysis_window.end_year} ({analysis_window.total_years} years)
@@ -69,8 +69,8 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Total Events */}
         <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
-          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+          <div className="flex items-center justify-between text-[#CBD5E1] mb-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">
               Total Heatwaves
             </span>
             <Flame className="w-4 h-4 text-[#F97316] group-hover:scale-110 transition-transform" />
@@ -78,7 +78,7 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
           <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono">
             {totalEvents}
           </div>
-          <div className="text-xs text-[#94A3B8] mt-1">
+          <div className="text-[13px] text-[#CBD5E1] mt-1">
             <span>{totalEvents === 0 ? "No qualifying events" : "Qualifying heatwave events"}</span>
           </div>
           <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-[#F97316]/5 rounded-full blur-xl pointer-events-none" />
@@ -86,17 +86,17 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
 
         {/* Total Heatwave Days & Average Duration */}
         <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
-          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+          <div className="flex items-center justify-between text-[#CBD5E1] mb-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">
               Extreme Heat Days
             </span>
             <Clock className="w-4 h-4 text-[#FB923C] group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono">
             {totalHeatwaveDays}
-            <span className="text-xs font-normal text-[#64748B] ml-1">days</span>
+            <span className="text-sm font-normal text-[#94A3B8] ml-1">days</span>
           </div>
-          <div className="text-xs text-[#94A3B8] mt-1">
+          <div className="text-[13px] text-[#CBD5E1] mt-1">
             <span>
               Avg duration:{" "}
               <strong className="text-[#F8FAFC] font-mono">
@@ -109,8 +109,8 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
 
         {/* Heatwave Trend & Units */}
         <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
-          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+          <div className="flex items-center justify-between text-[#CBD5E1] mb-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">
               Frequency Trend
             </span>
             <TrendingUp className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
@@ -119,23 +119,23 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
             {freqTrend?.slope_per_decade !== null && freqTrend?.slope_per_decade !== undefined ? (
               <>
                 <span>{formatSlope(freqTrend.slope_per_decade, 2)}</span>
-                <span className="text-xs font-sans font-normal text-[#64748B]">
+                <span className="text-xs font-sans font-medium text-[#CBD5E1]">
                   {freqTrend.unit || "events/dec"}
                 </span>
               </>
             ) : (
-              <span className="text-base text-[#64748B]">N/A (Insufficient Data)</span>
+              <span className="text-sm text-[#94A3B8]">N/A (Insufficient Data)</span>
             )}
           </div>
           <div className="text-xs mt-1">
             {freqBadge ? (
               <span
-                className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold ${freqBadge.className}`}
+                className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${freqBadge.className}`}
               >
                 {freqBadge.label}
               </span>
             ) : (
-              <span className="text-[#64748B] text-[10px]">OLS Regression</span>
+              <span className="text-[#94A3B8] text-[11px]">OLS Regression</span>
             )}
           </div>
           <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-rose-500/5 rounded-full blur-xl pointer-events-none" />
@@ -143,8 +143,8 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
 
         {/* Peak Temperature Exceedance */}
         <div className="p-4 sm:p-5 rounded-xl bg-[#0F172A] border border-[#334155] relative overflow-hidden group shadow-sm">
-          <div className="flex items-center justify-between text-[#94A3B8] mb-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+          <div className="flex items-center justify-between text-[#CBD5E1] mb-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">
               Peak Exceedance
             </span>
             <Thermometer className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
@@ -152,10 +152,10 @@ export const SummaryStats: React.FC<SummaryStatsProps> = ({ data, regionName }) 
           <div className="text-2xl sm:text-3xl font-bold text-[#F8FAFC] font-mono">
             {peakExceedance !== null ? `+${formatNumber(peakExceedance, 1)}°C` : "N/A"}
           </div>
-          <div className="text-xs text-[#94A3B8] mt-1 flex items-center justify-between gap-1">
-            <span className="text-[10px] text-[#64748B]">Above threshold</span>
-            <div className="flex items-center gap-1 font-mono text-[10px] text-[#10B981]">
-              <ShieldCheck className="w-3 h-3 text-[#10B981]" />
+          <div className="text-[13px] text-[#CBD5E1] mt-1 flex items-center justify-between gap-1">
+            <span className="text-xs text-[#94A3B8]">Above threshold</span>
+            <div className="flex items-center gap-1 font-mono text-xs text-[#10B981]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" />
               <span>{formatPercent(data_quality.completeness_percentage)}</span>
             </div>
           </div>

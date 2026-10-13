@@ -12,11 +12,11 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {
     <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-[#F97316]/10 via-[#0F172A] to-[#0F172A] border border-[#F97316]/30 shadow-sm space-y-3">
       <div className="flex items-center gap-2 text-[#FB923C]">
         <Sparkles className="w-4 h-4 text-[#F97316]" />
-        <h3 className="text-xs font-semibold tracking-wide uppercase font-mono">
+        <h3 className="text-sm font-semibold tracking-wide uppercase font-mono">
           Key Climatological Insights
         </h3>
       </div>
-      <p className="text-xs text-[#94A3B8]">
+      <p className="text-[13px] text-[#CBD5E1]">
         Synthesized directly from backend historical observations and statistical regression tests
       </p>
 
@@ -24,9 +24,9 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {
         {insights.map((insight, idx) => (
           <div
             key={idx}
-            className="flex items-start gap-2.5 p-3 rounded-lg bg-[#090D16] border border-[#1E293B] text-xs text-[#F8FAFC] leading-relaxed shadow-xs"
+            className="flex items-start gap-2.5 p-3 rounded-lg bg-[#090D16] border border-[#1E293B] text-[13px] text-[#F8FAFC] leading-relaxed shadow-xs"
           >
-            <div className="w-5 h-5 rounded-full bg-[#F97316]/20 text-[#FB923C] border border-[#F97316]/40 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px] font-mono">
+            <div className="w-5 h-5 rounded-full bg-[#F97316]/20 text-[#FB923C] border border-[#F97316]/40 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[11px] font-mono">
               {idx + 1}
             </div>
             <span>{insight}</span>
