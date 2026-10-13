@@ -21,7 +21,7 @@ import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import { RecentEventsTable } from "@/components/dashboard/RecentEventsTable";
 import { BaselineMetadataCard } from "@/components/dashboard/BaselineMetadataCard";
 import { ExportButton } from "@/components/dashboard/ExportButton";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ClimateLoadingState } from "@/components/dashboard/ClimateLoadingState";
 import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useHeatwaveAnalysis, AnalysisResult } from "@/hooks/useHeatwaveAnalysis";
@@ -377,26 +377,17 @@ export default function Home() {
 
             {/* In-Flight Analysis Loading Indicator */}
             {isLoading && (
-              <div className="p-8 sm:p-12 rounded-xl bg-[#0F172A] border border-[#334155] flex flex-col items-center justify-center space-y-3.5 shadow-xl relative overflow-hidden">
-                <div className="absolute w-72 h-72 bg-[#F97316]/10 rounded-full blur-3xl pointer-events-none -top-10" />
-                <LoadingSpinner
-                  size="lg"
-                  label={`Analyzing ${pendingTargetName} (${formState.startYear}–${formState.endYear})...`}
-                />
-                <div className="text-xs text-[#94A3B8] font-mono bg-[#090D16] p-2.5 rounded border border-[#1E293B] text-center max-w-md">
-                  Source: {formState.model} • Baseline: {formState.baselineStartYear}–{formState.baselineEndYear} • Threshold: {formState.thresholdPercentile}th %ile • Min: {formState.minConsecutiveDays}d
-                </div>
-                <p className="text-xs text-[#64748B] max-w-sm text-center">
-                  Computing calendar-day moving-window percentiles, extracting multi-day extreme anomalies, and executing OLS linear regressions.
-                </p>
-                <button
-                  type="button"
-                  onClick={cancel}
-                  className="text-xs text-rose-400 hover:text-rose-300 underline cursor-pointer mt-1"
-                >
-                  Cancel Analysis Request
-                </button>
-              </div>
+              <ClimateLoadingState
+                targetName={pendingTargetName}
+                startYear={formState.startYear}
+                endYear={formState.endYear}
+                model={formState.model}
+                baselineStartYear={formState.baselineStartYear}
+                baselineEndYear={formState.baselineEndYear}
+                thresholdPercentile={formState.thresholdPercentile}
+                minConsecutiveDays={formState.minConsecutiveDays}
+                onCancel={cancel}
+              />
             )}
 
             {/* Preserved Previous Result Notice when request fails */}
